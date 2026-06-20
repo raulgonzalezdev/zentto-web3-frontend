@@ -7,7 +7,6 @@ import {
   Tabs,
   Tab,
   Alert,
-  Chip,
   Stack,
   Card,
   CardContent,
@@ -17,11 +16,29 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { InfoNote, GLOSSARY } from "@/components/ui/InfoNote";
-import { Copyable } from "@/components/ui/Copyable";
-import { ZenttoDataGrid, type ZenttoColumn } from "@/components/data-grid/ZenttoDataGrid";
+import {
+  ZenttoDataGrid,
+  type ColumnDef,
+  type GridRow,
+} from "@/components/data-grid/ZenttoDataGrid";
 import { useChain, useChainValidation } from "@/lib/hooks";
-import { shortHash, formatAmount, fromNow } from "@/lib/format";
-import type { Block, Transaction } from "@/lib/types";
+
+/** Normaliza un timestamp (epoch en seg/ms o ISO) a ISO-8601 para el grid. */
+function toIso(ts: number | string | null | undefined): string {
+  if (ts === null || ts === undefined) return "";
+  let ms: number;
+  if (typeof ts === "string" && /^\d+$/.test(ts)) {
+    const n = Number(ts);
+    ms = n < 1e12 ? n * 1000 : n;
+  } else if (typeof ts === "number") {
+    ms = ts < 1e12 ? ts * 1000 : ts;
+  } else {
+    const d = new Date(ts);
+    return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+  }
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+}
 
 export default function ExplorerPage() {
   const [tab, setTab] = React.useState(0);
@@ -29,66 +46,57 @@ export default function ExplorerPage() {
   const validation = useChainValidation(false);
 
   const blocks = chain.data?.blocks ?? [];
-  const txs: (Transaction & { blockIndex: number })[] = React.useMemo(
+
+  const blockRows: GridRow[] = React.useMemo(
     () =>
-      blocks.flatMap((b) =>
-        (b.transactions || []).map((t) => ({ ...t, blockIndex: b.index })),
-      ),
+      [...blocks].reverse().map((b) => ({
+        index: b.index,
+        hash: b.hash,
+        txCount: b.transactions?.length ?? 0,
+        nonce: b.nonce,
+        timestamp: toIso(b.timestamp),
+      })),
     [blocks],
   );
 
-  const blockCols: ZenttoColumn<Block>[] = [
-    { field: "index", headerName: "#", width: 70 },
-    {
-      field: "hash",
-      headerName: "Hash",
-      renderCell: (v) => <Copyable value={v} display={shortHash(v, 10, 8)} />,
-    },
-    {
-      field: "transactions",
-      headerName: "Txs",
-      align: "right",
-      renderCell: (v: Transaction[]) => (
-        <Chip size="small" label={v?.length ?? 0} />
-      ),
-    },
-    { field: "nonce", headerName: "Nonce", align: "right" },
-    {
-      field: "timestamp",
-      headerName: "Edad",
-      renderCell: (v) => fromNow(v),
-    },
+  const txRows: GridRow[] = React.useMemo(() => {
+    const all = blocks.flatMap((b) =>
+      (b.transactions || []).map((t) => ({ ...t, blockIndex: b.index })),
+    );
+    return [...all].reverse().map((t) => ({
+      blockIndex: t.blockIndex,
+      fromAddress: t.fromAddress ?? "coinbase",
+      toAddress: t.toAddress,
+      amount: t.amount,
+      fee: t.fee,
+      status: t.status ?? "confirmed",
+    }));
+  }, [blocks]);
+
+  const blockCols: ColumnDef[] = [
+    { field: "index", header: "#", type: "number", width: 90 },
+    { field: "hash", header: "Hash", flex: 2, minWidth: 220 },
+    { field: "txCount", header: "Txs", type: "number", width: 100 },
+    { field: "nonce", header: "Nonce", type: "number", width: 120 },
+    { field: "timestamp", header: "Fecha", type: "datetime", minWidth: 180 },
   ];
 
-  const txCols: ZenttoColumn<Transaction & { blockIndex: number }>[] = [
+  const txCols: ColumnDef[] = [
+    { field: "blockIndex", header: "Bloque", type: "number", width: 110 },
+    { field: "fromAddress", header: "De", flex: 2, minWidth: 200 },
+    { field: "toAddress", header: "A", flex: 2, minWidth: 200 },
+    { field: "amount", header: "Cantidad", type: "number", width: 130 },
+    { field: "fee", header: "Fee", type: "number", width: 110 },
     {
-      field: "blockIndex",
-      headerName: "Bloque",
-      width: 80,
-      renderCell: (v) => <Chip size="small" variant="outlined" label={`#${v}`} />,
-    },
-    {
-      field: "fromAddress",
-      headerName: "De",
-      renderCell: (v) =>
-        v ? <Copyable value={v} display={shortHash(v)} /> : <Chip size="small" color="secondary" label="coinbase" />,
-    },
-    {
-      field: "toAddress",
-      headerName: "A",
-      renderCell: (v) => <Copyable value={v} display={shortHash(v)} />,
-    },
-    {
-      field: "amount",
-      headerName: "Cantidad",
-      align: "right",
-      renderCell: (v) => formatAmount(v),
-    },
-    {
-      field: "fee",
-      headerName: "Fee",
-      align: "right",
-      renderCell: (v) => formatAmount(v),
+      field: "status",
+      header: "Estado",
+      width: 130,
+      statusColors: {
+        confirmed: "success",
+        mined: "success",
+        pending: "warning",
+        failed: "error",
+      },
     },
   ];
 
@@ -143,25 +151,23 @@ export default function ExplorerPage() {
       <Card>
         <CardContent>
           <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-            <Tab label={`Bloques (${blocks.length})`} />
-            <Tab label={`Transacciones (${txs.length})`} />
+            <Tab label={`Bloques (${blockRows.length})`} />
+            <Tab label={`Transacciones (${txRows.length})`} />
           </Tabs>
 
           {tab === 0 ? (
             <ZenttoDataGrid
               columns={blockCols}
-              rows={[...blocks].reverse()}
-              getRowId={(b) => b.index}
+              rows={blockRows}
               loading={chain.isLoading}
-              emptyMessage="La cadena aun no tiene bloques. Mina el primero."
+              pageSize={25}
             />
           ) : (
             <ZenttoDataGrid
               columns={txCols}
-              rows={[...txs].reverse()}
-              getRowId={(t, i) => t.id ?? i}
+              rows={txRows}
               loading={chain.isLoading}
-              emptyMessage="Aun no hay transacciones confirmadas."
+              pageSize={25}
             />
           )}
 

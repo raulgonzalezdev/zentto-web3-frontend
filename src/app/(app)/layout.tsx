@@ -1,10 +1,10 @@
 import { AuthGuard } from "@/components/layout/AuthGuard";
-import { AppShell } from "@/components/layout/AppShell";
+import { ZenttoAppShell } from "@/components/layout/ZenttoAppShell";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <AppShell>{children}</AppShell>
+      <ZenttoAppShell>{children}</ZenttoAppShell>
     </AuthGuard>
   );
 }

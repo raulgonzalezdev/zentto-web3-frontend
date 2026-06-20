@@ -1,161 +1,172 @@
 "use client";
 
 /**
- * ZenttoDataGrid — STAND-IN TEMPORAL de `@zentto/datagrid`.
+ * ZenttoDataGrid — wrapper React del web component Lit `<zentto-grid>` real
+ * (`@zentto/datagrid` 1.5.0 + tipos de `@zentto/datagrid-core` 1.5.0).
  *
- * El paquete privado `@zentto/datagrid` / `@zentto/datagrid-core` no puede
- * instalarse aun (token npm privado pendiente). Este componente replica la
- * MISMA FORMA DE PROPS para permitir un swap directo en el futuro:
+ * El web component es client-only: el import de `@zentto/datagrid` registra
+ * `customElements.define('zentto-grid', ...)` y solo puede correr en el browser.
+ * Para no romper el prerender/`output: 'export'` de Next:
+ *   - El componente interno (`ZenttoGridInner`) importa `@zentto/datagrid` dentro
+ *     de un `useEffect` (nunca en SSR).
+ *   - Se exporta via `next/dynamic` con `{ ssr: false }`.
  *
- *    <ZenttoDataGrid columns={cols} rows={rows} />
- *
- * Cuando el token este disponible, basta con reemplazar este import por:
- *    import { ZenttoDataGrid } from "@zentto/datagrid";
- * (manteniendo la API columns/rows/renderCell).
- *
- * Implementado con MUI <Table> — NUNCA <table> HTML cruda (regla Zentto).
+ * Patron tomado de zentto-medical (`src/components/ZenttoDataGrid.tsx`).
  */
 
 import * as React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  Paper,
-  Box,
-  Typography,
-  Skeleton,
-} from "@mui/material";
+import dynamic from "next/dynamic";
+import { Skeleton, Paper } from "@mui/material";
+import type { ColumnDef, GridRow } from "@zentto/datagrid-core";
 
-export interface ZenttoColumn<R = any> {
-  field: string;
-  headerName: string;
-  width?: number | string;
-  align?: "left" | "right" | "center";
-  renderCell?: (value: any, row: R) => React.ReactNode;
-}
+export type { ColumnDef, GridRow } from "@zentto/datagrid-core";
 
-export interface ZenttoDataGridProps<R = any> {
-  columns: ZenttoColumn<R>[];
-  rows: R[];
-  getRowId?: (row: R, index: number) => string | number;
+export interface ZenttoDataGridProps {
+  columns: ColumnDef[];
+  rows: GridRow[];
   loading?: boolean;
-  emptyMessage?: string;
+  /** Tamaño de pagina inicial (mapeado a `pageSizeOptions` del grid). */
   pageSize?: number;
-  dense?: boolean;
+  showTotals?: boolean;
+  enableSearch?: boolean;
+  enableExport?: boolean;
+  enableClipboard?: boolean;
+  /** Altura CSS del grid. Default: 'auto' (crece con el contenido). */
+  height?: string | number;
+  /** Compat con el contrato previo; el grid identifica filas internamente. */
+  getRowId?: (row: GridRow, index: number) => string | number;
+  /** Compat con el contrato previo; el grid trae su propio estado vacio. */
+  emptyMessage?: string;
+  onRowClick?: (row: GridRow) => void;
+  onActionClick?: (action: string, row: GridRow) => void;
 }
 
-export function ZenttoDataGrid<R = any>({
-  columns,
-  rows,
-  getRowId,
-  loading = false,
-  emptyMessage = "Sin registros.",
-  pageSize = 10,
-  dense = true,
-}: ZenttoDataGridProps<R>) {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(pageSize);
+declare module "react" {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      "zentto-grid": React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
+    }
+  }
+}
 
-  React.useEffect(() => {
-    setPage(0);
-  }, [rows]);
-
-  const paged = React.useMemo(
-    () => rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [rows, page, rowsPerPage],
-  );
-
+function GridSkeleton() {
   return (
-    <Paper variant="outlined" sx={{ overflow: "hidden" }}>
-      <TableContainer>
-        <Table size={dense ? "small" : "medium"} stickyHeader>
-          <TableHead>
-            <TableRow>
-              {columns.map((col) => (
-                <TableCell
-                  key={col.field}
-                  align={col.align}
-                  sx={{
-                    fontWeight: 700,
-                    whiteSpace: "nowrap",
-                    width: col.width,
-                    bgcolor: "background.paper",
-                  }}
-                >
-                  {col.headerName}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <TableRow key={`sk-${i}`}>
-                  {columns.map((col) => (
-                    <TableCell key={col.field}>
-                      <Skeleton variant="text" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : paged.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length}>
-                  <Box sx={{ py: 4, textAlign: "center" }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {emptyMessage}
-                    </Typography>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ) : (
-              paged.map((row, idx) => {
-                const id = getRowId
-                  ? getRowId(row, idx)
-                  : (row as any).id ?? (row as any).index ?? idx;
-                return (
-                  <TableRow hover key={id}>
-                    {columns.map((col) => {
-                      const value = (row as any)[col.field];
-                      return (
-                        <TableCell key={col.field} align={col.align}>
-                          {col.renderCell
-                            ? col.renderCell(value, row)
-                            : value === null || value === undefined
-                              ? "—"
-                              : String(value)}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      {rows.length > rowsPerPage && (
-        <TablePagination
-          component="div"
-          count={rows.length}
-          page={page}
-          onPageChange={(_, p) => setPage(p)}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
-          }}
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          labelRowsPerPage="Filas:"
-        />
-      )}
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Skeleton key={i} variant="text" height={32} />
+      ))}
     </Paper>
   );
 }
+
+function ZenttoGridInner({
+  columns,
+  rows,
+  loading = false,
+  pageSize = 10,
+  showTotals = false,
+  enableSearch = true,
+  enableExport = true,
+  enableClipboard = true,
+  height = "auto",
+  onRowClick,
+  onActionClick,
+}: ZenttoDataGridProps) {
+  const elRef = React.useRef<(HTMLElement & Record<string, unknown>) | null>(null);
+  const [registered, setRegistered] = React.useState(false);
+
+  // Registro del custom element solo en el browser.
+  React.useEffect(() => {
+    let cancelled = false;
+    import("@zentto/datagrid")
+      .then(() => {
+        if (!cancelled) setRegistered(true);
+      })
+      .catch(() => {
+        /* registro fallido: el grid simplemente no monta */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Propaga props -> propiedades del web component por ref.
+  React.useEffect(() => {
+    const el = elRef.current;
+    if (!el || !registered) return;
+    el.columns = columns;
+    el.rows = rows;
+    el.loading = loading;
+    el.showTotals = showTotals;
+    el.theme = "zentto";
+    el.enableClipboard = enableClipboard;
+    el.enableQuickSearch = enableSearch;
+    el.showToolbarSearch = enableSearch;
+    el.showToolbarExport = enableExport;
+    el.enableToolbar = enableSearch || enableExport;
+    el.pageSizeOptions = Array.from(
+      new Set([pageSize, 10, 25, 50, 100].filter((n) => n > 0)),
+    ).sort((a, b) => a - b);
+    if (typeof height === "string" && height !== "auto") el.height = height;
+  }, [
+    registered,
+    columns,
+    rows,
+    loading,
+    showTotals,
+    enableClipboard,
+    enableSearch,
+    enableExport,
+    pageSize,
+    height,
+  ]);
+
+  // Eventos del grid -> callbacks React.
+  React.useEffect(() => {
+    const el = elRef.current;
+    if (!el || !registered) return;
+
+    const handleRowClick = (e: Event) => {
+      onRowClick?.((e as CustomEvent).detail?.row);
+    };
+    const handleActionClick = (e: Event) => {
+      const { action, row } = (e as CustomEvent).detail ?? {};
+      onActionClick?.(action, row);
+    };
+
+    el.addEventListener("row-click", handleRowClick);
+    el.addEventListener("action-click", handleActionClick);
+    return () => {
+      el.removeEventListener("row-click", handleRowClick);
+      el.removeEventListener("action-click", handleActionClick);
+    };
+  }, [registered, onRowClick, onActionClick]);
+
+  if (!registered) return <GridSkeleton />;
+
+  return (
+    <zentto-grid
+      ref={elRef as React.RefObject<HTMLElement>}
+      style={{
+        display: "block",
+        width: "100%",
+        height: typeof height === "number" ? `${height}px` : height,
+      }}
+    />
+  );
+}
+
+/**
+ * Export client-only: `ssr: false` garantiza que el web component nunca se
+ * intente prerender en build/export (output: 'export').
+ */
+export const ZenttoDataGrid = dynamic(() => Promise.resolve(ZenttoGridInner), {
+  ssr: false,
+  loading: () => <GridSkeleton />,
+});
 
 export default ZenttoDataGrid;

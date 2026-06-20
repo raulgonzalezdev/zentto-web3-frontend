@@ -87,17 +87,25 @@ La `privateKey` de una wallet:
 - **nunca** se persiste en localStorage, sessionStorage ni cookies;
 - al recargar la página se pierde (es intencional). Hay un aviso fuerte en la UI.
 
-## Componentes stand-in (pendientes de swap a `@zentto/*`)
+## Integración con paquetes `@zentto/*`
 
-Los paquetes privados `@zentto/*` y `next-auth` **no** están instalados todavía
-(token npm privado pendiente). Se reemplazarán cuando el token esté listo. Por
-ahora hay stand-ins con la **misma forma de props** para un swap directo:
+El grid y el layout usan los **paquetes reales** privados de Zentto (ya
+instalados, token npm activo):
 
-| Stand-in local | Reemplaza a |
+| Componente | Paquete real |
 |---|---|
-| `src/components/data-grid/ZenttoDataGrid.tsx` (MUI `<Table>`, nunca `<table>` HTML) | `@zentto/datagrid` / `@zentto/datagrid-core` |
-| `src/components/layout/AppShell.tsx` (sidebar colapsable + topbar) | `@zentto/vertical-layout` |
-| `src/lib/auth-context.tsx` (cliente propio con react-query) | `@zentto/auth-client` / `next-auth` |
+| `src/components/data-grid/ZenttoDataGrid.tsx` (wrapper del web component Lit `<zentto-grid>`, client-only via `next/dynamic` `ssr:false`) | `@zentto/datagrid` 1.5.0 / `@zentto/datagrid-core` 1.5.0 |
+| `src/components/layout/ZenttoAppShell.tsx` → `ZenttoVerticalLayout` | `@zentto/vertical-layout` 0.1.0 |
+
+`ZenttoVerticalLayout` importa `next-auth/react` a nivel de módulo. Esta app
+**no** usa next-auth (la auth corre contra el backend Web3 propio en
+`src/lib/auth-context.tsx`): el import se redirige a un shim inerte
+(`src/lib/next-auth-react-shim.tsx`) vía alias en `next.config.mjs`, y al layout
+se le pasan `userName` y `onLogout` explícitos.
+
+| Auth local | Sustituye a |
+|---|---|
+| `src/lib/auth-context.tsx` (cliente propio con react-query, cookies httpOnly del backend) | `@zentto/auth-client` / `next-auth` |
 
 ## Tauri (escritorio + móvil)
 

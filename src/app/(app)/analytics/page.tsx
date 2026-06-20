@@ -15,49 +15,50 @@ import {
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { InfoNote } from "@/components/ui/InfoNote";
-import { Copyable } from "@/components/ui/Copyable";
-import { ZenttoDataGrid, type ZenttoColumn } from "@/components/data-grid/ZenttoDataGrid";
+import {
+  ZenttoDataGrid,
+  type ColumnDef,
+  type GridRow,
+} from "@/components/data-grid/ZenttoDataGrid";
 import { GraphView } from "@/components/analytics/GraphView";
 import { useGraph, useHubs } from "@/lib/hooks";
-import { shortHash, formatAmount } from "@/lib/format";
-import type { GraphEdge, Hub } from "@/lib/types";
 
 export default function AnalyticsPage() {
   const [tab, setTab] = React.useState(0);
   const graph = useGraph();
   const hubs = useHubs(5);
 
-  const edgeCols: ZenttoColumn<GraphEdge>[] = [
-    {
-      field: "from",
-      headerName: "Origen",
-      renderCell: (v) => <Copyable value={v} display={shortHash(v)} />,
-    },
-    {
-      field: "to",
-      headerName: "Destino",
-      renderCell: (v) => <Copyable value={v} display={shortHash(v)} />,
-    },
-    {
-      field: "amount",
-      headerName: "Monto",
-      align: "right",
-      renderCell: (v) => (v !== undefined ? formatAmount(v) : "—"),
-    },
+  // El backend devuelve aristas con { from, to, volume, count }.
+  const edgeRows: GridRow[] = React.useMemo(
+    () =>
+      (graph.data?.edges ?? []).map((e) => ({
+        from: e.from,
+        to: e.to,
+        volume: (e as Record<string, unknown>).volume ?? e.amount ?? 0,
+        count: (e as Record<string, unknown>).count ?? 0,
+      })),
+    [graph.data],
+  );
+
+  const hubRows: GridRow[] = React.useMemo(
+    () =>
+      (hubs.data ?? []).map((h) => ({
+        address: h.address,
+        degree: h.degree,
+      })),
+    [hubs.data],
+  );
+
+  const edgeCols: ColumnDef[] = [
+    { field: "from", header: "Origen", flex: 2, minWidth: 200 },
+    { field: "to", header: "Destino", flex: 2, minWidth: 200 },
+    { field: "volume", header: "Volumen", type: "number", width: 140 },
+    { field: "count", header: "Movimientos", type: "number", width: 140 },
   ];
 
-  const hubCols: ZenttoColumn<Hub>[] = [
-    {
-      field: "address",
-      headerName: "Address (hub)",
-      renderCell: (v) => <Copyable value={v} display={shortHash(v, 14, 10)} />,
-    },
-    {
-      field: "degree",
-      headerName: "Grado (conexiones)",
-      align: "right",
-      renderCell: (v) => <Chip size="small" color="secondary" label={v} />,
-    },
+  const hubCols: ColumnDef[] = [
+    { field: "address", header: "Address (hub)", flex: 2, minWidth: 240 },
+    { field: "degree", header: "Grado (conexiones)", type: "number", width: 180 },
   ];
 
   return (
@@ -114,18 +115,14 @@ export default function AnalyticsPage() {
           {tab === 0 ? (
             <ZenttoDataGrid
               columns={hubCols}
-              rows={hubs.data ?? []}
-              getRowId={(h, i) => h.address ?? i}
+              rows={hubRows}
               loading={hubs.isLoading}
-              emptyMessage="No se detectaron hubs (grado minimo 5)."
             />
           ) : (
             <ZenttoDataGrid
               columns={edgeCols}
-              rows={graph.data?.edges ?? []}
-              getRowId={(e, i) => `${e.from}-${e.to}-${i}`}
+              rows={edgeRows}
               loading={graph.isLoading}
-              emptyMessage="Aun no hay flujos en el grafo."
             />
           )}
         </CardContent>
