@@ -11,6 +11,8 @@ import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import LinkIcon from "@mui/icons-material/Link";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import GroupIcon from "@mui/icons-material/Group";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 export interface NavItem {
   label: string;
@@ -26,19 +28,32 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    title: "General",
+    title: "Banca",
     items: [
       {
         label: "Panel",
         href: "/",
         icon: DashboardIcon,
-        hint: "Estado de la cadena y accesos rapidos",
+        hint: "Metricas de operacion del neobanco",
       },
-    ],
-  },
-  {
-    title: "Banca",
-    items: [
+      {
+        label: "Usuarios",
+        href: "/usuarios",
+        icon: GroupIcon,
+        hint: "Clientes, saldos, KYC y 2FA",
+      },
+      {
+        label: "Transacciones",
+        href: "/transacciones",
+        icon: SwapHorizIcon,
+        hint: "Todos los movimientos del neobanco",
+      },
+      {
+        label: "KYC / Revisión",
+        href: "/kyc",
+        icon: VerifiedUserIcon,
+        hint: "Verificaciones de identidad y decisiones",
+      },
       {
         label: "Cuenta / Saldo",
         href: "/cuenta",
@@ -50,12 +65,6 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/pagos",
         icon: ReceiptLongIcon,
         hint: "Historial de movimientos",
-      },
-      {
-        label: "KYC / Revisión",
-        href: "/kyc",
-        icon: VerifiedUserIcon,
-        hint: "Cola de verificaciones del operador",
       },
       {
         label: "On-chain (EVM)",

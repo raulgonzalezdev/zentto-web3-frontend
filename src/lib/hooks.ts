@@ -38,6 +38,12 @@ import type {
   DepositInfo,
   ChainDeposit,
   WithdrawInput,
+  AdminStats,
+  AdminUser,
+  AdminKyc,
+  AdminPayment,
+  PaymentType,
+  KycStatus,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -253,7 +259,48 @@ export function useKycDecision() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["kyc", "pending"] });
       qc.invalidateQueries({ queryKey: ["kyc", "status"] });
+      qc.invalidateQueries({ queryKey: ["admin", "kyc"] });
+      qc.invalidateQueries({ queryKey: ["admin", "stats"] });
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
     },
+  });
+}
+
+/* ---------- Admin / operador backoffice (todos los usuarios) ---------- */
+
+/** Metricas de operacion del neobanco (GET /admin/stats). */
+export function useAdminStats() {
+  return useQuery<AdminStats>({
+    queryKey: ["admin", "stats"],
+    queryFn: () => api.get<AdminStats>(ENDPOINTS.adminStats),
+    refetchInterval: 30_000,
+  });
+}
+
+/** Listado de usuarios con saldos (GET /admin/users). */
+export function useAdminUsers() {
+  return useQuery<AdminUser[]>({
+    queryKey: ["admin", "users"],
+    queryFn: () => api.get<AdminUser[]>(ENDPOINTS.adminUsers),
+    refetchInterval: 30_000,
+  });
+}
+
+/** Verificaciones KYC de todos los usuarios, filtrables por estado. */
+export function useAdminKyc(status?: KycStatus) {
+  return useQuery<AdminKyc[]>({
+    queryKey: ["admin", "kyc", status ?? "all"],
+    queryFn: () => api.get<AdminKyc[]>(ENDPOINTS.adminKyc(status)),
+    refetchInterval: 20_000,
+  });
+}
+
+/** Movimientos de pago de todos los usuarios, filtrables por tipo. */
+export function useAdminPayments(type?: PaymentType) {
+  return useQuery<AdminPayment[]>({
+    queryKey: ["admin", "payments", type ?? "all"],
+    queryFn: () => api.get<AdminPayment[]>(ENDPOINTS.adminPayments(type)),
+    refetchInterval: 20_000,
   });
 }
 

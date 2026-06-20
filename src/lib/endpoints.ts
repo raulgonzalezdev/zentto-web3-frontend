@@ -69,6 +69,14 @@ export const ENDPOINTS = {
   deposits: "/accounts/deposits",
   withdraw: "/payments/withdraw",
 
+  // admin / operador backoffice (datos de TODOS los usuarios — protegido)
+  adminStats: "/admin/stats",
+  adminUsers: "/admin/users",
+  adminKyc: (status?: string) =>
+    status ? `/admin/kyc?status=${encodeURIComponent(status)}` : "/admin/kyc",
+  adminPayments: (type?: string) =>
+    type ? `/admin/payments?type=${encodeURIComponent(type)}` : "/admin/payments",
+
   // on-chain EVM (Sepolia — publico)
   evmInfo: "/evm/info",
   evmAddress: (address: string) => `/evm/address/${encodeURIComponent(address)}`,

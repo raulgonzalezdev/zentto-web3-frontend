@@ -10,21 +10,24 @@ import {
   Typography,
   Box,
   Stack,
-  Chip,
   Button,
   CircularProgress,
+  Alert,
+  Divider,
 } from "@mui/material";
-import HeightIcon from "@mui/icons-material/Height";
-import VerifiedIcon from "@mui/icons-material/Verified";
+import GroupIcon from "@mui/icons-material/Group";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import CancelIcon from "@mui/icons-material/Cancel";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import SendIcon from "@mui/icons-material/Send";
-import MemoryIcon from "@mui/icons-material/Memory";
-import TravelExploreIcon from "@mui/icons-material/TravelExplore";
-import GppGoodIcon from "@mui/icons-material/GppGood";
+import SouthWestIcon from "@mui/icons-material/SouthWest";
+import NorthEastIcon from "@mui/icons-material/NorthEast";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { InfoNote } from "@/components/ui/InfoNote";
-import { useChain, useChainValidation, usePending } from "@/lib/hooks";
+import { useAdminStats } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth-context";
 
 function StatCard({
@@ -53,12 +56,13 @@ function StatCard({
               placeItems: "center",
               bgcolor: color,
               color: "#fff",
+              flexShrink: 0,
             }}
           >
             {icon}
           </Box>
-          <Box>
-            <Typography variant="caption" color="text.secondary">
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary" noWrap>
               {label}
             </Typography>
             <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
@@ -72,74 +76,181 @@ function StatCard({
 }
 
 const QUICK = [
-  { href: "/wallets", label: "Crear wallet", icon: <AccountBalanceWalletIcon /> },
-  { href: "/minado", label: "Minar un bloque", icon: <MemoryIcon /> },
-  { href: "/enviar", label: "Enviar fondos", icon: <SendIcon /> },
-  { href: "/explorer", label: "Explorar la cadena", icon: <TravelExploreIcon /> },
-  { href: "/compliance", label: "Screening AML", icon: <GppGoodIcon /> },
+  { href: "/usuarios", label: "Usuarios y saldos", icon: <GroupIcon /> },
+  { href: "/transacciones", label: "Transacciones", icon: <SwapHorizIcon /> },
+  { href: "/kyc", label: "Revisión KYC", icon: <VerifiedUserIcon /> },
 ];
 
-export default function DashboardPage() {
+export default function PanelPage() {
   const { user } = useAuth();
-  const chain = useChain();
-  const validation = useChainValidation(true);
-  const pending = usePending();
+  const stats = useAdminStats();
+  const s = stats.data;
 
   return (
     <Box>
       <PageHeader
-        title={`Hola, ${user?.displayName || user?.email?.split("@")[0] || "explorador"}`}
-        subtitle="Estado de tu blockchain didactica en tiempo real."
+        title={`Panel de operación`}
+        subtitle={`Hola, ${user?.displayName || user?.email?.split("@")[0] || "operador"}. Métricas del neobanco en tiempo real.`}
+        actions={
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={() => stats.refetch()}
+          >
+            Actualizar
+          </Button>
+        }
       />
 
-      <InfoNote title="Nuevo en web3? Empieza aqui">
-        Una <strong>blockchain</strong> es un libro contable compartido: bloques
-        encadenados que nadie puede alterar sin romper la cadena. Crea una{" "}
-        <strong>wallet</strong>, <strong>mina</strong> un bloque para obtener
-        monedas, <strong>envia</strong> una transferencia y observala
-        confirmarse en el <strong>explorer</strong>. Todo es de practica, sin
-        dinero real.
+      <InfoNote title="Centro de operación bancaria">
+        Vista consolidada de toda la plataforma: usuarios registrados, cola de{" "}
+        <strong>KYC</strong>, volumen de <strong>pagos</strong> y{" "}
+        <strong>retiros en proceso</strong> que pueden requerir atención manual.
       </InfoNote>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      {stats.isError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          No se pudieron cargar las métricas. Verifica tu sesión de operador y el
+          backend (/admin/stats).
+        </Alert>
+      )}
+
+      {/* Resumen global */}
+      <Grid container spacing={2} sx={{ mb: 1 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            icon={<HeightIcon />}
-            label="Altura de la cadena"
-            value={chain.data?.height ?? "—"}
-            loading={chain.isLoading}
+            icon={<GroupIcon />}
+            label="Usuarios"
+            value={s?.users ?? "—"}
+            loading={stats.isLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <StatCard
-            icon={<VerifiedIcon />}
-            label="Integridad"
-            color={validation.data?.valid ? "success.main" : "error.main"}
-            value={
-              validation.isLoading ? (
-                "—"
-              ) : validation.data?.valid ? (
-                <Chip size="small" color="success" label="Valida" />
-              ) : (
-                <Chip size="small" color="error" label="Invalida" />
-              )
-            }
-            loading={validation.isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             icon={<ReceiptLongIcon />}
-            label="En mempool (pendientes)"
+            label="Pagos totales"
+            color="secondary.main"
+            value={s?.payments.total ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<HourglassEmptyIcon />}
+            label="KYC pendientes"
             color="warning.main"
-            value={pending.data?.length ?? 0}
-            loading={pending.isLoading}
+            value={s?.kyc.pending ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<PendingActionsIcon />}
+            label="Retiros en proceso"
+            color={
+              (s?.payments.withdrawalsProcessing ?? 0) > 0
+                ? "error.main"
+                : "success.main"
+            }
+            value={s?.payments.withdrawalsProcessing ?? "—"}
+            loading={stats.isLoading}
           />
         </Grid>
       </Grid>
 
-      <Typography variant="h6" sx={{ mb: 1.5 }}>
-        Accesos rapidos
+      <Divider textAlign="left" sx={{ my: 2 }}>
+        <Typography variant="overline" color="text.secondary">
+          KYC
+        </Typography>
+      </Divider>
+      <Grid container spacing={2} sx={{ mb: 1 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<VerifiedUserIcon />}
+            label="Aprobadas"
+            color="success.main"
+            value={s?.kyc.approved ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<HourglassEmptyIcon />}
+            label="Pendientes"
+            color="warning.main"
+            value={s?.kyc.pending ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<CancelIcon />}
+            label="Rechazadas"
+            color="error.main"
+            value={s?.kyc.rejected ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<VerifiedUserIcon />}
+            label="Total verificaciones"
+            value={s?.kyc.total ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+      </Grid>
+
+      <Divider textAlign="left" sx={{ my: 2 }}>
+        <Typography variant="overline" color="text.secondary">
+          Pagos
+        </Typography>
+      </Divider>
+      <Grid container spacing={2} sx={{ mb: 1 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<SouthWestIcon />}
+            label="Depósitos"
+            color="success.main"
+            value={s?.payments.deposits ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<NorthEastIcon />}
+            label="Retiros"
+            color="warning.main"
+            value={s?.payments.withdrawals ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<SwapHorizIcon />}
+            label="Transferencias"
+            color="info.main"
+            value={s?.payments.transfers ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={<PendingActionsIcon />}
+            label="Retiros en proceso"
+            color={
+              (s?.payments.withdrawalsProcessing ?? 0) > 0
+                ? "error.main"
+                : "success.main"
+            }
+            value={s?.payments.withdrawalsProcessing ?? "—"}
+            loading={stats.isLoading}
+          />
+        </Grid>
+      </Grid>
+
+      <Typography variant="h6" sx={{ mb: 1.5, mt: 3 }}>
+        Accesos rápidos
       </Typography>
       <Grid container spacing={2}>
         {QUICK.map((q) => (
@@ -157,22 +268,6 @@ export default function DashboardPage() {
           </Grid>
         ))}
       </Grid>
-
-      {validation.data && !validation.data.valid && (
-        <InfoNote title="La cadena reporta errores" severity="error">
-          <Box component="ul" sx={{ pl: 2, m: 0 }}>
-            {validation.data.errors?.map((e, i) => (
-              <li key={i}>{e}</li>
-            ))}
-          </Box>
-        </InfoNote>
-      )}
-
-      <Box sx={{ mt: 3 }}>
-        <Button component={Link} href="/explorer" variant="outlined">
-          Ver explorer completo
-        </Button>
-      </Box>
     </Box>
   );
 }

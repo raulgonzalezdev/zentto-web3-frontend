@@ -266,6 +266,72 @@ export interface WithdrawInput {
   totpCode: string;
 }
 
+/* ---------- Admin / operador backoffice ---------- */
+
+/** Metricas de operacion del neobanco (GET /admin/stats). */
+export interface AdminStats {
+  users: number;
+  kyc: {
+    approved: number;
+    pending: number;
+    rejected: number;
+    total: number;
+  };
+  payments: {
+    total: number;
+    deposits: number;
+    withdrawals: number;
+    transfers: number;
+    withdrawalsProcessing: number;
+  };
+}
+
+/** Usuario del neobanco con sus saldos (GET /admin/users). */
+export interface AdminUser {
+  id: string;
+  email: string;
+  displayName?: string | null;
+  totpEnabled: boolean;
+  kycStatus: KycStatus;
+  balances: AccountBalance[];
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/** Verificacion KYC de cualquier usuario (GET /admin/kyc). */
+export interface AdminKyc {
+  id: string;
+  userId: string;
+  email: string;
+  status: KycStatus;
+  fullName: string | null;
+  documentType: string | null;
+  documentNumber: string | null;
+  nationality: string | null;
+  mrzValid: boolean;
+  amlMatch: boolean;
+  amlHits?: unknown;
+  provider: string;
+  decisionReason?: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/** Movimiento de pago de cualquier usuario (GET /admin/payments). */
+export interface AdminPayment {
+  id: string;
+  userId: string;
+  email: string;
+  type: PaymentType;
+  asset: string;
+  amount: string;
+  status: PaymentStatus;
+  counterparty?: string | null;
+  failureReason?: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
 /* ---------- On-chain (EVM real — Sepolia) ---------- */
 
 export interface EvmInfo {
