@@ -28,6 +28,20 @@ export default function AnalyticsPage() {
   const graph = useGraph();
   const hubs = useHubs(5);
 
+  // El backend devuelve nodos como { address, inDegree, outDegree, ... }.
+  // GraphView espera { id, label, degree }: lo mapeamos aquí.
+  const graphNodes = React.useMemo(
+    () =>
+      (graph.data?.nodes ?? []).map((n) => {
+        const rec = n as Record<string, unknown>;
+        const address = String(rec.address ?? rec.id ?? "");
+        const degree =
+          Number(rec.inDegree ?? 0) + Number(rec.outDegree ?? 0) || Number(rec.degree ?? 0);
+        return { id: address, label: address, degree };
+      }),
+    [graph.data],
+  );
+
   // El backend devuelve aristas con { from, to, volume, count }.
   const edgeRows: GridRow[] = React.useMemo(
     () =>
@@ -99,7 +113,7 @@ export default function AnalyticsPage() {
             Grafo de direcciones
           </Typography>
           <GraphView
-            nodes={graph.data?.nodes ?? []}
+            nodes={graphNodes}
             edges={graph.data?.edges ?? []}
             loading={graph.isLoading}
           />

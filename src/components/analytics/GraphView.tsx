@@ -93,14 +93,14 @@ export function GraphView({
           );
         })}
         {/* nodos */}
-        {nodes.map((node) => {
+        {nodes.map((node, i) => {
           const p = positions.get(node.id);
           if (!p) return null;
           const r = 6 + ((node.degree ?? 0) / maxDegree) * 14;
           const isHub = (node.degree ?? 0) >= 5;
           return (
             // <title> nativo de SVG = tooltip al pasar el cursor (válido dentro de <svg>).
-            <g key={node.id} style={{ cursor: "pointer" }}>
+            <g key={node.id || `n-${i}`} style={{ cursor: "pointer" }}>
               <circle
                 cx={p.x}
                 cy={p.y}

@@ -15,7 +15,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { api } from "./api";
+import { api, apiFetch } from "./api";
 import { ENDPOINTS } from "./endpoints";
 import type { User, LoginResult, TwoFactorSetup } from "./types";
 
@@ -48,7 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ME_KEY,
     queryFn: async () => {
       try {
-        const data = await api.get<{ user: User }>(ENDPOINTS.me);
+        // Sondeo inicial: si no hay sesión, no intentamos refresh (evita un 401 extra).
+        const data = await apiFetch<{ user: User }>(ENDPOINTS.me, {
+          method: "GET",
+          retryOnAuth: false,
+        });
         return data?.user ?? null;
       } catch {
         return null;
