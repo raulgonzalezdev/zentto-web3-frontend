@@ -1,0 +1,47 @@
+{
+  "name": "zentto-web3-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Frontend (Next.js 16 + MUI + Tauri v2) para el backend didactico Zentto Web3",
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "lint": "next lint",
+    "export": "cross-env TAURI_BUILD=1 next build",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "android:dev": "tauri android dev",
+    "android:build": "tauri android build",
+    "ios:dev": "tauri ios dev",
+    "ios:build": "tauri ios build"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.5.0",
+    "@mui/material": "^6.5.0",
+    "@tanstack/react-query": "^5.64.2",
+    "@zentto/datagrid": "^1.5.0",
+    "@zentto/datagrid-core": "^1.5.0",
+    "@zentto/vertical-layout": "^0.1.0",
+    "dayjs": "^1.11.13",
+    "next": "^16.2.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-markdown": "^9.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.8.0"
+  }
+}
