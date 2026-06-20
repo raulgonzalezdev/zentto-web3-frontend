@@ -59,6 +59,16 @@ export const ENDPOINTS = {
   paymentTransfer: "/payments/transfer",
   paymentCredit: "/payments/credit",
 
+  // KYC / compliance (operador backoffice — protegido)
+  kycPending: "/kyc/pending",
+  kycDecision: (id: string) => `/kyc/${encodeURIComponent(id)}/decision`,
+  kycStatus: "/kyc/status",
+
+  // deposito / retiro on-chain (custodia — protegido)
+  depositAddress: "/accounts/deposit-address",
+  deposits: "/accounts/deposits",
+  withdraw: "/payments/withdraw",
+
   // on-chain EVM (Sepolia — publico)
   evmInfo: "/evm/info",
   evmAddress: (address: string) => `/evm/address/${encodeURIComponent(address)}`,

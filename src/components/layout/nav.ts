@@ -10,6 +10,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import LinkIcon from "@mui/icons-material/Link";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 
 export interface NavItem {
   label: string;
@@ -49,6 +50,12 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/pagos",
         icon: ReceiptLongIcon,
         hint: "Historial de movimientos",
+      },
+      {
+        label: "KYC / Revisión",
+        href: "/kyc",
+        icon: VerifiedUserIcon,
+        hint: "Cola de verificaciones del operador",
       },
       {
         label: "On-chain (EVM)",

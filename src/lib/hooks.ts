@@ -32,6 +32,12 @@ import type {
   ComplianceStatus,
   AnalyticsGraph,
   Hub,
+  KycPending,
+  KycStatusView,
+  KycDecisionInput,
+  DepositInfo,
+  ChainDeposit,
+  WithdrawInput,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -220,6 +226,73 @@ export function useCredit() {
         idempotencyKey: true,
       }),
     onSuccess: invalidate,
+  });
+}
+
+/* ---------- KYC (cola de revisión del operador) ---------- */
+
+/** Cola de verificaciones pendientes de revisión (operador). */
+export function useKycPending() {
+  return useQuery<KycPending[]>({
+    queryKey: ["kyc", "pending"],
+    queryFn: () => api.get<KycPending[]>(ENDPOINTS.kycPending),
+    refetchInterval: 15_000,
+  });
+}
+
+/** Aprueba o rechaza una verificación; invalida la cola al terminar. */
+export function useKycDecision() {
+  const qc = useQueryClient();
+  return useMutation<
+    KycStatusView,
+    Error,
+    { id: string } & KycDecisionInput
+  >({
+    mutationFn: ({ id, approve, reason }) =>
+      api.post<KycStatusView>(ENDPOINTS.kycDecision(id), { approve, reason }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["kyc", "pending"] });
+      qc.invalidateQueries({ queryKey: ["kyc", "status"] });
+    },
+  });
+}
+
+/** Estado KYC propio del usuario operador. */
+export function useKycStatus() {
+  return useQuery<KycStatusView>({
+    queryKey: ["kyc", "status"],
+    queryFn: () => api.get<KycStatusView>(ENDPOINTS.kycStatus),
+  });
+}
+
+/* ---------- Depósito / retiro on-chain (custodia) ---------- */
+
+export function useDepositInfo() {
+  return useQuery<DepositInfo>({
+    queryKey: ["deposit", "address"],
+    queryFn: () => api.get<DepositInfo>(ENDPOINTS.depositAddress),
+  });
+}
+
+export function useDeposits() {
+  return useQuery<ChainDeposit[]>({
+    queryKey: ["deposits"],
+    queryFn: () => api.get<ChainDeposit[]>(ENDPOINTS.deposits),
+    refetchInterval: 20_000,
+  });
+}
+
+/** Retiro on-chain: requiere TOTP + Idempotency-Key por intento. */
+export function useWithdraw() {
+  const invalidate = useInvalidateBanca();
+  const qc = useQueryClient();
+  return useMutation<Payment, Error, WithdrawInput>({
+    mutationFn: (input) =>
+      api.post<Payment>(ENDPOINTS.withdraw, input, { idempotencyKey: true }),
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["deposits"] });
+    },
   });
 }
 

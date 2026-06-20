@@ -187,6 +187,85 @@ export interface CreditInput {
   amount: string;
 }
 
+/* ---------- KYC (cola de revisión del operador) ---------- */
+
+export type KycStatus =
+  | "not_started"
+  | "pending"
+  | "in_review"
+  | "approved"
+  | "rejected"
+  | "needs_more_info"
+  | string;
+
+/** Verificación en la cola del operador (GET /kyc/pending). */
+export interface KycPending {
+  id: string;
+  userId: string;
+  status: KycStatus;
+  fullName: string | null;
+  documentType: string | null;
+  documentNumber: string | null;
+  nationality: string | null;
+  mrzValid: boolean;
+  amlMatch: boolean;
+  amlHits?: unknown;
+  provider: string;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/** Estado KYC propio del usuario (GET /kyc/status). */
+export interface KycStatusView {
+  id?: string;
+  status: KycStatus;
+  provider?: string;
+  mrzValid?: boolean;
+  amlMatch?: boolean;
+  redirectUrl?: string | null;
+  decisionReason?: string | null;
+}
+
+export interface KycDecisionInput {
+  approve: boolean;
+  reason?: string;
+}
+
+/* ---------- Depósito / retiro on-chain (custodia) ---------- */
+
+/** Dirección de depósito on-chain del usuario (GET /accounts/deposit-address). */
+export interface DepositInfo {
+  network: string;
+  chainName: string;
+  address: string;
+  asset: string;
+  token: string;
+  explorerUrl: string;
+  note: string;
+  [k: string]: unknown;
+}
+
+/** Depósito on-chain detectado (GET /accounts/deposits). */
+export interface ChainDeposit {
+  id: string;
+  network: string;
+  txHash: string;
+  asset: string;
+  toAddress: string;
+  amount: string;
+  blockNumber: string;
+  paymentId?: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+export interface WithdrawInput {
+  asset: string;
+  amount: string;
+  toAddress: string;
+  totpCode: string;
+}
+
 /* ---------- On-chain (EVM real — Sepolia) ---------- */
 
 export interface EvmInfo {
