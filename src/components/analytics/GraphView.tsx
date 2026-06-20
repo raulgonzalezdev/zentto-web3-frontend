@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Box, Typography, Tooltip, Skeleton } from "@mui/material";
+import { Box, Typography, Skeleton } from "@mui/material";
 import { brand } from "@/theme";
 import { shortHash } from "@/lib/format";
 import type { GraphNode, GraphEdge } from "@/lib/types";
@@ -99,22 +99,18 @@ export function GraphView({
           const r = 6 + ((node.degree ?? 0) / maxDegree) * 14;
           const isHub = (node.degree ?? 0) >= 5;
           return (
-            <Tooltip
-              key={node.id}
-              title={`${node.label || shortHash(node.id)} · grado ${node.degree ?? 0}`}
-              arrow
-            >
-              <g style={{ cursor: "pointer" }}>
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={r}
-                  fill={isHub ? brand.accent : brand.primary}
-                  stroke={brand.bg}
-                  strokeWidth={2}
-                />
-              </g>
-            </Tooltip>
+            // <title> nativo de SVG = tooltip al pasar el cursor (válido dentro de <svg>).
+            <g key={node.id} style={{ cursor: "pointer" }}>
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={r}
+                fill={isHub ? brand.accent : brand.primary}
+                stroke={brand.bg}
+                strokeWidth={2}
+              />
+              <title>{`${node.label || shortHash(node.id)} · grado ${node.degree ?? 0}`}</title>
+            </g>
           );
         })}
       </svg>
