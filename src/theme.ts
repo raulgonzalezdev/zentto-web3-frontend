@@ -2,12 +2,14 @@
 
 import { createTheme } from "@mui/material/styles";
 
-// Paleta Zentto Web3 — tono "blockchain" oscuro con acento indigo/cyan.
+// Paleta Zentto Web3 — acento indigo/cyan, con variantes oscura y clara.
 export const brand = {
+  // Oscuro (por defecto)
   bg: "#0b1020",
   surface: "#11182e",
   surface2: "#1a2440",
   border: "#26324f",
+  // Marca (compartido entre modos)
   primary: "#6366f1",
   primaryHover: "#4f52e0",
   accent: "#22d3ee",
@@ -16,20 +18,46 @@ export const brand = {
   danger: "#ef4444",
   text: "#e5e9f5",
   muted: "#8b97b8",
+  // Claro
+  bgLight: "#f4f6fb",
+  surfaceLight: "#ffffff",
+  borderLight: "#e3e8f2",
+  textLight: "#15203a",
+  mutedLight: "#5b6478",
+};
+
+const shared = {
+  primary: { main: brand.primary, dark: brand.primaryHover, contrastText: "#fff" },
+  secondary: { main: brand.accent, contrastText: "#06121a" },
+  success: { main: brand.success },
+  warning: { main: brand.warning },
+  error: { main: brand.danger },
 };
 
 const theme = createTheme({
-  cssVariables: true,
-  palette: {
-    mode: "dark",
-    primary: { main: brand.primary, dark: brand.primaryHover, contrastText: "#fff" },
-    secondary: { main: brand.accent, contrastText: "#06121a" },
-    success: { main: brand.success },
-    warning: { main: brand.warning },
-    error: { main: brand.danger },
-    background: { default: brand.bg, paper: brand.surface },
-    text: { primary: brand.text, secondary: brand.muted },
-    divider: brand.border,
+  // Selector por clase: MUI alterna .light/.dark en <html>; el ThemeToggle del
+  // layout (useColorScheme/setMode) cambia entre estos esquemas.
+  cssVariables: { colorSchemeSelector: "class" },
+  defaultColorScheme: "dark",
+  colorSchemes: {
+    dark: {
+      palette: {
+        mode: "dark",
+        ...shared,
+        background: { default: brand.bg, paper: brand.surface },
+        text: { primary: brand.text, secondary: brand.muted },
+        divider: brand.border,
+      },
+    },
+    light: {
+      palette: {
+        mode: "light",
+        ...shared,
+        background: { default: brand.bgLight, paper: brand.surfaceLight },
+        text: { primary: brand.textLight, secondary: brand.mutedLight },
+        divider: brand.borderLight,
+      },
+    },
   },
   breakpoints: { values: { xs: 0, sm: 600, md: 900, lg: 1200, xl: 1536 } },
   typography: {
@@ -56,12 +84,13 @@ const theme = createTheme({
     },
     MuiCard: {
       styleOverrides: {
-        root: {
+        // Usa variables de tema => adapta color en light/dark.
+        root: ({ theme }) => ({
           borderRadius: 14,
-          border: `1px solid ${brand.border}`,
+          border: `1px solid ${theme.vars.palette.divider}`,
           backgroundImage: "none",
-          backgroundColor: brand.surface,
-        },
+          backgroundColor: theme.vars.palette.background.paper,
+        }),
       },
     },
     MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
@@ -70,7 +99,9 @@ const theme = createTheme({
     },
     MuiFormControl: { defaultProps: { size: "small", fullWidth: true } },
     MuiTableCell: {
-      styleOverrides: { root: { borderColor: brand.border } },
+      styleOverrides: {
+        root: ({ theme }) => ({ borderColor: theme.vars.palette.divider }),
+      },
     },
   },
 });

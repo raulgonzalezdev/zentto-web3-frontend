@@ -20,8 +20,8 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
+      <ThemeProvider theme={theme} defaultMode="dark">
+        <CssBaseline enableColorScheme />
         <AuthProvider>
           <WalletStoreProvider>{children}</WalletStoreProvider>
         </AuthProvider>

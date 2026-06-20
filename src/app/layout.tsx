@@ -1,3 +1,4 @@
+import InitColorSchemeScript from "@mui/material/InitColorSchemeScript";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 
@@ -19,8 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <body style={{ margin: 0 }}>
+        {/* Fija la clase de esquema (light/dark) antes de la hidratación para
+            evitar parpadeo y mismatch. Debe coincidir con colorSchemeSelector. */}
+        <InitColorSchemeScript attribute="class" defaultMode="dark" />
         <Providers>{children}</Providers>
       </body>
     </html>
