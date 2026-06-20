@@ -56,6 +56,24 @@ interface RequestOptions {
   // si false, no se reintenta refresh ante 401 (lo usa el propio refresh).
   retryOnAuth?: boolean;
   signal?: AbortSignal;
+  /**
+   * Clave de idempotencia para POSTs que mutan saldo (transfer/credit).
+   * Si se pasa `true`, se genera un uuid por intento. Si se pasa un string,
+   * se usa ese valor (util para reintentos seguros desde la UI).
+   */
+  idempotencyKey?: string | boolean;
+}
+
+/** Genera un uuid v4 (browser + Node 19+). Fallback simple si no hay crypto. */
+function genUuid(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 let refreshInFlight: Promise<boolean> | null = null;
@@ -98,6 +116,13 @@ export async function apiFetch<T = unknown>(
   if (MUTATING.has(method)) {
     const csrf = await ensureCsrf();
     if (csrf) headers["x-csrf-token"] = csrf;
+  }
+
+  if (opts.idempotencyKey) {
+    headers["Idempotency-Key"] =
+      typeof opts.idempotencyKey === "string"
+        ? opts.idempotencyKey
+        : genUuid();
   }
 
   const exec = () =>
@@ -144,8 +169,16 @@ export async function apiFetch<T = unknown>(
 export const api = {
   get: <T = unknown>(path: string, signal?: AbortSignal) =>
     apiFetch<T>(path, { method: "GET", signal }),
-  post: <T = unknown>(path: string, body?: unknown) =>
-    apiFetch<T>(path, { method: "POST", body }),
+  post: <T = unknown>(
+    path: string,
+    body?: unknown,
+    opts?: { idempotencyKey?: string | boolean },
+  ) =>
+    apiFetch<T>(path, {
+      method: "POST",
+      body,
+      idempotencyKey: opts?.idempotencyKey,
+    }),
   put: <T = unknown>(path: string, body?: unknown) =>
     apiFetch<T>(path, { method: "PUT", body }),
   patch: <T = unknown>(path: string, body?: unknown) =>

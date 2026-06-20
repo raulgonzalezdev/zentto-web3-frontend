@@ -7,6 +7,9 @@ import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import GppGoodIcon from "@mui/icons-material/GppGood";
 import HubIcon from "@mui/icons-material/Hub";
 import SettingsIcon from "@mui/icons-material/Settings";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import LinkIcon from "@mui/icons-material/Link";
 
 export interface NavItem {
   label: string;
@@ -33,53 +36,66 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "Mis fondos",
+    title: "Banca",
+    items: [
+      {
+        label: "Cuenta / Saldo",
+        href: "/cuenta",
+        icon: AccountBalanceIcon,
+        hint: "Saldo por asset, faucet y transferencias",
+      },
+      {
+        label: "Pagos",
+        href: "/pagos",
+        icon: ReceiptLongIcon,
+        hint: "Historial de movimientos",
+      },
+      {
+        label: "On-chain (EVM)",
+        href: "/onchain",
+        icon: LinkIcon,
+        hint: "Red Sepolia real, saldos y transacciones",
+      },
+    ],
+  },
+  {
+    title: "Sandbox (cadena didactica)",
     items: [
       {
         label: "Wallets",
         href: "/wallets",
         icon: AccountBalanceWalletIcon,
-        hint: "Crear monederos y ver saldo",
+        hint: "Crear monederos y ver saldo (laboratorio)",
       },
       {
         label: "Enviar",
         href: "/enviar",
         icon: SendIcon,
-        hint: "Firmar y enviar una transferencia",
+        hint: "Firmar y enviar una transferencia (laboratorio)",
       },
       {
         label: "Minado",
         href: "/minado",
         icon: MemoryIcon,
-        hint: "Crear bloques y ganar recompensa",
+        hint: "Crear bloques y ganar recompensa (laboratorio)",
       },
-    ],
-  },
-  {
-    title: "Red",
-    items: [
       {
         label: "Explorer",
         href: "/explorer",
         icon: TravelExploreIcon,
-        hint: "Bloques y transacciones",
+        hint: "Bloques y transacciones (laboratorio)",
       },
       {
         label: "Analitica",
         href: "/analytics",
         icon: HubIcon,
-        hint: "Grafo de direcciones y hubs",
+        hint: "Grafo de direcciones y hubs (laboratorio)",
       },
-    ],
-  },
-  {
-    title: "Cumplimiento",
-    items: [
       {
         label: "AML / Cumplimiento",
         href: "/compliance",
         icon: GppGoodIcon,
-        hint: "Screening de riesgo e informe IA",
+        hint: "Screening de riesgo e informe IA (laboratorio)",
       },
     ],
   },

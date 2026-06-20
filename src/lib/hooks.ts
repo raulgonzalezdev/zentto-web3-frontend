@@ -5,11 +5,19 @@
 import {
   useQuery,
   useMutation,
+  useQueryClient,
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { api } from "./api";
 import { ENDPOINTS } from "./endpoints";
 import type {
+  AccountBalance,
+  Payment,
+  TransferInput,
+  CreditInput,
+  EvmInfo,
+  EvmAddressBalance,
+  EvmTx,
   Chain,
   ChainValidation,
   Block,
@@ -154,5 +162,89 @@ export function useHubs(minDegree = 5) {
   return useQuery<Hub[]>({
     queryKey: ["analytics", "hubs", minDegree],
     queryFn: () => api.get<Hub[]>(ENDPOINTS.hubs(minDegree)),
+  });
+}
+
+/* ---------- Banca (neobanco custodial) ---------- */
+
+export function useAccountBalance() {
+  return useQuery<AccountBalance[]>({
+    queryKey: ["accounts", "balance"],
+    queryFn: () => api.get<AccountBalance[]>(ENDPOINTS.accountsBalance),
+    refetchInterval: 15_000,
+  });
+}
+
+export function usePayments() {
+  return useQuery<Payment[]>({
+    queryKey: ["payments"],
+    queryFn: () => api.get<Payment[]>(ENDPOINTS.payments),
+    refetchInterval: 15_000,
+  });
+}
+
+export function usePayment(id: string | null) {
+  return useQuery<Payment>({
+    queryKey: ["payment", id],
+    queryFn: () => api.get<Payment>(ENDPOINTS.payment(id as string)),
+    enabled: !!id,
+  });
+}
+
+/** Invalida saldo + historial tras una operacion bancaria. */
+function useInvalidateBanca() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["accounts", "balance"] });
+    qc.invalidateQueries({ queryKey: ["payments"] });
+  };
+}
+
+export function useTransfer() {
+  const invalidate = useInvalidateBanca();
+  return useMutation<Payment, Error, TransferInput>({
+    // Idempotency-Key generada por intento (uuid) en el cliente API.
+    mutationFn: (input) =>
+      api.post<Payment>(ENDPOINTS.paymentTransfer, input, {
+        idempotencyKey: true,
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useCredit() {
+  const invalidate = useInvalidateBanca();
+  return useMutation<Payment, Error, CreditInput>({
+    mutationFn: (input) =>
+      api.post<Payment>(ENDPOINTS.paymentCredit, input, {
+        idempotencyKey: true,
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+/* ---------- On-chain (EVM real — Sepolia) ---------- */
+
+export function useEvmInfo() {
+  return useQuery<EvmInfo>({
+    queryKey: ["evm", "info"],
+    queryFn: () => api.get<EvmInfo>(ENDPOINTS.evmInfo),
+    refetchInterval: 15_000,
+  });
+}
+
+export function useEvmAddress(address: string | null) {
+  return useQuery<EvmAddressBalance>({
+    queryKey: ["evm", "address", address],
+    queryFn: () => api.get<EvmAddressBalance>(ENDPOINTS.evmAddress(address as string)),
+    enabled: !!address,
+  });
+}
+
+export function useEvmTx(hash: string | null) {
+  return useQuery<EvmTx>({
+    queryKey: ["evm", "tx", hash],
+    queryFn: () => api.get<EvmTx>(ENDPOINTS.evmTx(hash as string)),
+    enabled: !!hash,
   });
 }

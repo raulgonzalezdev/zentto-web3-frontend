@@ -51,4 +51,16 @@ export const ENDPOINTS = {
     `/analytics/address/${address}/relations`,
   trace: (from: string, to: string) =>
     `/analytics/trace?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+
+  // banca (neobanco custodial — protegido)
+  accountsBalance: "/accounts/balance",
+  payments: "/payments",
+  payment: (id: string) => `/payments/${encodeURIComponent(id)}`,
+  paymentTransfer: "/payments/transfer",
+  paymentCredit: "/payments/credit",
+
+  // on-chain EVM (Sepolia — publico)
+  evmInfo: "/evm/info",
+  evmAddress: (address: string) => `/evm/address/${encodeURIComponent(address)}`,
+  evmTx: (hash: string) => `/evm/tx/${encodeURIComponent(hash)}`,
 } as const;
