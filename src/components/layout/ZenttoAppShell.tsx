@@ -17,7 +17,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ZenttoVerticalLayout } from "@zentto/vertical-layout";
 import HexagonIcon from "@mui/icons-material/Hexagon";
-import { NAV_SECTIONS } from "./nav";
+import { buildNavSections, type NavSection } from "./nav";
+import { LegalFooter } from "./LegalFooter";
 import { useAuth } from "@/lib/auth-context";
 
 /**
@@ -26,9 +27,11 @@ import { useAuth } from "@/lib/auth-context";
  *   { kind: 'header', title } | { kind: 'page', segment, title, icon } | { kind: 'divider' }
  * `segment` es la ruta sin el slash inicial ('' para la raiz '/').
  */
-function buildNavigationFields(): Array<Record<string, unknown>> {
+function buildNavigationFields(
+  sections: NavSection[],
+): Array<Record<string, unknown>> {
   const fields: Array<Record<string, unknown>> = [];
-  NAV_SECTIONS.forEach((section, i) => {
+  sections.forEach((section, i) => {
     fields.push({ kind: "header", title: section.title });
     section.items.forEach((item) => {
       const Icon = item.icon;
@@ -39,7 +42,7 @@ function buildNavigationFields(): Array<Record<string, unknown>> {
         icon: <Icon fontSize="small" />,
       });
     });
-    if (i < NAV_SECTIONS.length - 1) fields.push({ kind: "divider" });
+    if (i < sections.length - 1) fields.push({ kind: "divider" });
   });
   return fields;
 }
@@ -48,7 +51,10 @@ export function ZenttoAppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  const navigationFields = React.useMemo(() => buildNavigationFields(), []);
+  const navigationFields = React.useMemo(
+    () => buildNavigationFields(buildNavSections(user?.role)),
+    [user?.role],
+  );
 
   const handleLogout = React.useCallback(async () => {
     await logout();
@@ -66,6 +72,7 @@ export function ZenttoAppShell({ children }: { children: React.ReactNode }) {
       onLogout={handleLogout}
     >
       {children}
+      <LegalFooter />
     </ZenttoVerticalLayout>
   );
 }

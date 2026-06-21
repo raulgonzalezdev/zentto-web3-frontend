@@ -44,6 +44,14 @@ import type {
   AdminPayment,
   PaymentType,
   KycStatus,
+  KycSubmitInput,
+  P2pOrder,
+  P2pOrderInput,
+  P2pTrade,
+  P2pSide,
+  P2pAsset,
+  PaymentMethod,
+  PaymentMethodInput,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -366,5 +374,139 @@ export function useEvmTx(hash: string | null) {
     queryKey: ["evm", "tx", hash],
     queryFn: () => api.get<EvmTx>(ENDPOINTS.evmTx(hash as string)),
     enabled: !!hash,
+  });
+}
+
+/* ---------- KYC propio del usuario (envío de documentos) ---------- */
+
+/** Envía/actualiza los datos de identidad del propio usuario para verificación. */
+export function useKycSubmit() {
+  const qc = useQueryClient();
+  return useMutation<KycStatusView, Error, KycSubmitInput>({
+    mutationFn: (input) => api.post<KycStatusView>(ENDPOINTS.kycSubmit, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["kyc", "status"] }),
+  });
+}
+
+/** Dispara la verificación de documentos (provider/MRZ) del propio usuario. */
+export function useKycVerifyDocuments() {
+  const qc = useQueryClient();
+  return useMutation<KycStatusView, Error, KycSubmitInput | void>({
+    mutationFn: (input) =>
+      api.post<KycStatusView>(ENDPOINTS.kycVerifyDocuments, input ?? undefined),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["kyc", "status"] }),
+  });
+}
+
+/* ---------- P2P (order book entre usuarios) ---------- */
+
+/** Order book filtrable por lado y asset. */
+export function useP2pOrders(side?: P2pSide, asset?: P2pAsset) {
+  return useQuery<P2pOrder[]>({
+    queryKey: ["p2p", "orders", side ?? "all", asset ?? "all"],
+    queryFn: () => api.get<P2pOrder[]>(ENDPOINTS.p2pOrders(side, asset)),
+    refetchInterval: 12_000,
+  });
+}
+
+/** Órdenes propias publicadas por el usuario. */
+export function useP2pMyOrders() {
+  return useQuery<P2pOrder[]>({
+    queryKey: ["p2p", "orders", "mine"],
+    queryFn: () => api.get<P2pOrder[]>(ENDPOINTS.p2pOrdersMine),
+    refetchInterval: 12_000,
+  });
+}
+
+/** Trades del usuario (como comprador o vendedor). */
+export function useP2pTrades() {
+  return useQuery<P2pTrade[]>({
+    queryKey: ["p2p", "trades"],
+    queryFn: () => api.get<P2pTrade[]>(ENDPOINTS.p2pTrades),
+    refetchInterval: 10_000,
+  });
+}
+
+/** Invalida todas las vistas P2P + saldo (escrow afecta el held). */
+function useInvalidateP2p() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["p2p"] });
+    qc.invalidateQueries({ queryKey: ["accounts", "balance"] });
+  };
+}
+
+/** Publica una oferta (vender escrowa la cripto). */
+export function useP2pCreateOrder() {
+  const invalidate = useInvalidateP2p();
+  return useMutation<P2pOrder, Error, P2pOrderInput>({
+    mutationFn: (input) =>
+      api.post<P2pOrder>(ENDPOINTS.p2pOrders(), input, { idempotencyKey: true }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Toma una oferta del order book (crea un trade). */
+export function useP2pTakeOrder() {
+  const invalidate = useInvalidateP2p();
+  return useMutation<P2pTrade, Error, { id: string }>({
+    mutationFn: ({ id }) =>
+      api.post<P2pTrade>(ENDPOINTS.p2pOrderTake(id), undefined, {
+        idempotencyKey: true,
+      }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Cancela una oferta propia. */
+export function useP2pCancelOrder() {
+  const invalidate = useInvalidateP2p();
+  return useMutation<P2pOrder, Error, { id: string }>({
+    mutationFn: ({ id }) => api.post<P2pOrder>(ENDPOINTS.p2pOrderCancel(id)),
+    onSuccess: invalidate,
+  });
+}
+
+/** Vendedor confirma haber recibido el pago → libera el cripto. */
+export function useP2pConfirmTrade() {
+  const invalidate = useInvalidateP2p();
+  return useMutation<P2pTrade, Error, { id: string }>({
+    mutationFn: ({ id }) => api.post<P2pTrade>(ENDPOINTS.p2pTradeConfirm(id)),
+    onSuccess: invalidate,
+  });
+}
+
+/** Cancela un trade en curso. */
+export function useP2pCancelTrade() {
+  const invalidate = useInvalidateP2p();
+  return useMutation<P2pTrade, Error, { id: string }>({
+    mutationFn: ({ id }) => api.post<P2pTrade>(ENDPOINTS.p2pTradeCancel(id)),
+    onSuccess: invalidate,
+  });
+}
+
+/* ---------- Métodos de pago del perfil ---------- */
+
+export function usePaymentMethods() {
+  return useQuery<PaymentMethod[]>({
+    queryKey: ["payment-methods"],
+    queryFn: () => api.get<PaymentMethod[]>(ENDPOINTS.paymentMethods),
+  });
+}
+
+export function useAddPaymentMethod() {
+  const qc = useQueryClient();
+  return useMutation<PaymentMethod, Error, PaymentMethodInput>({
+    mutationFn: (input) =>
+      api.post<PaymentMethod>(ENDPOINTS.paymentMethods, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["payment-methods"] }),
+  });
+}
+
+export function useDeletePaymentMethod() {
+  const qc = useQueryClient();
+  return useMutation<void, Error, { id: string }>({
+    mutationFn: ({ id }) => api.del<void>(ENDPOINTS.paymentMethod(id)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["payment-methods"] }),
   });
 }

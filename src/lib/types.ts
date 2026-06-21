@@ -1,10 +1,15 @@
 // Tipos del dominio Zentto Web3 (alineados al API_CONTRACT.md del backend).
 
+/** Rol del usuario en el neobanco. Define qué menú/secciones ve. */
+export type UserRole = "user" | "operator" | "admin";
+
 export interface User {
   id: string;
   email: string;
   displayName?: string | null;
   totpEnabled: boolean;
+  /** Rol entregado por GET /auth/me. Default 'user' si el backend no lo manda. */
+  role?: UserRole;
 }
 
 export interface LoginOk {
@@ -356,5 +361,107 @@ export interface EvmTx {
   from?: string;
   to?: string;
   value?: string;
+  [k: string]: unknown;
+}
+
+/* ---------- P2P (order book entre usuarios) ---------- */
+
+export type P2pSide = "buy" | "sell";
+export type P2pAsset = "USDT" | "USDC" | string;
+
+export type P2pOrderStatus =
+  | "open"
+  | "partial"
+  | "filled"
+  | "cancelled"
+  | string;
+
+/** Oferta del order book (GET /p2p/orders). */
+export interface P2pOrder {
+  id: string;
+  side: P2pSide;
+  asset: P2pAsset;
+  amount: string;
+  priceVes: string;
+  paymentMethod?: string | null;
+  makerEmail?: string | null;
+  makerId?: string | null;
+  status?: P2pOrderStatus;
+  isMine?: boolean;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+export interface P2pOrderInput {
+  side: P2pSide;
+  asset: P2pAsset;
+  amount: string;
+  priceVes: string;
+  paymentMethod?: string;
+}
+
+export type P2pTradeStatus =
+  | "pending"
+  | "paid"
+  | "released"
+  | "completed"
+  | "cancelled"
+  | "disputed"
+  | string;
+
+/** Trade originado al tomar una oferta (GET /p2p/trades). */
+export interface P2pTrade {
+  id: string;
+  orderId: string;
+  side: P2pSide;
+  asset: P2pAsset;
+  amount: string;
+  priceVes: string;
+  status: P2pTradeStatus;
+  /** Rol del usuario actual en este trade. */
+  role?: "maker" | "taker" | "buyer" | "seller" | string;
+  /** true si el usuario actual es el vendedor (puede confirmar pago). */
+  isSeller?: boolean;
+  counterpartyEmail?: string | null;
+  paymentMethod?: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/* ---------- Métodos de pago del perfil ---------- */
+
+export type PaymentMethodType = "pago_movil" | "bank_account" | string;
+
+/** Método de pago del usuario (GET /me/payment-methods). */
+export interface PaymentMethod {
+  id: string;
+  type: PaymentMethodType;
+  label: string;
+  bankName?: string | null;
+  accountHolder?: string | null;
+  idNumber?: string | null;
+  phone?: string | null;
+  accountNumber?: string | null;
+  createdAt?: number | string;
+  [k: string]: unknown;
+}
+
+export interface PaymentMethodInput {
+  type: PaymentMethodType;
+  label: string;
+  bankName?: string;
+  accountHolder?: string;
+  idNumber?: string;
+  phone?: string;
+  accountNumber?: string;
+}
+
+/* ---------- KYC propio (envío de documentos) ---------- */
+
+export interface KycSubmitInput {
+  fullName?: string;
+  documentType?: string;
+  documentNumber?: string;
+  nationality?: string;
   [k: string]: unknown;
 }

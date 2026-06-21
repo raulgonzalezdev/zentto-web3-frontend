@@ -63,6 +63,27 @@ export const ENDPOINTS = {
   kycPending: "/kyc/pending",
   kycDecision: (id: string) => `/kyc/${encodeURIComponent(id)}/decision`,
   kycStatus: "/kyc/status",
+  kycSubmit: "/kyc/submit",
+  kycVerifyDocuments: "/kyc/verify-documents",
+
+  // P2P (order book entre usuarios — protegido)
+  p2pOrders: (side?: string, asset?: string) => {
+    const qs = new URLSearchParams();
+    if (side) qs.set("side", side);
+    if (asset) qs.set("asset", asset);
+    const s = qs.toString();
+    return s ? `/p2p/orders?${s}` : "/p2p/orders";
+  },
+  p2pOrdersMine: "/p2p/orders/mine",
+  p2pOrderTake: (id: string) => `/p2p/orders/${encodeURIComponent(id)}/take`,
+  p2pOrderCancel: (id: string) => `/p2p/orders/${encodeURIComponent(id)}/cancel`,
+  p2pTrades: "/p2p/trades",
+  p2pTradeConfirm: (id: string) => `/p2p/trades/${encodeURIComponent(id)}/confirm`,
+  p2pTradeCancel: (id: string) => `/p2p/trades/${encodeURIComponent(id)}/cancel`,
+
+  // métodos de pago del perfil (protegido)
+  paymentMethods: "/me/payment-methods",
+  paymentMethod: (id: string) => `/me/payment-methods/${encodeURIComponent(id)}`,
 
   // deposito / retiro on-chain (custodia — protegido)
   depositAddress: "/accounts/deposit-address",
