@@ -90,7 +90,7 @@ export default function PanelPage() {
     <Box>
       <PageHeader
         title={`Panel de operación`}
-        subtitle={`Hola, ${user?.displayName || user?.email?.split("@")[0] || "operador"}. Métricas del neobanco en tiempo real.`}
+        subtitle={`Hola, ${user?.displayName || user?.email?.split("@")[0] || "operador"}. Métricas de Zentto en tiempo real.`}
         actions={
           <Button
             variant="outlined"
