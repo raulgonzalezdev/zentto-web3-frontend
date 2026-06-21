@@ -166,9 +166,72 @@ export async function apiFetch<T = unknown>(
   }
 }
 
+/**
+ * POST de un `FormData` (multipart) — para subida de imágenes KYC.
+ *
+ * No fija Content-Type a mano: el browser añade el boundary automáticamente.
+ * Mantiene credentials:'include' + CSRF + auto-refresh ante 401 (igual que apiFetch).
+ *
+ * `requireAuth=false` (handoff público): no manda CSRF ni reintenta refresh —
+ * la página `/verificar` es pública y se autentica con el token del body.
+ */
+export async function apiPostForm<T = unknown>(
+  path: string,
+  form: FormData,
+  opts: { signal?: AbortSignal; requireAuth?: boolean } = {},
+): Promise<T> {
+  const requireAuth = opts.requireAuth !== false;
+  const headers: Record<string, string> = {};
+
+  if (requireAuth) {
+    const csrf = await ensureCsrf();
+    if (csrf) headers["x-csrf-token"] = csrf;
+  }
+
+  const exec = () =>
+    fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: form,
+      signal: opts.signal,
+    });
+
+  let res = await exec();
+
+  if (requireAuth && res.status === 401) {
+    const ok = await doRefresh();
+    if (ok) res = await exec();
+  }
+
+  if (!res.ok) {
+    let parsed: unknown = null;
+    let message = `HTTP ${res.status}`;
+    try {
+      parsed = await res.json();
+      const m = (parsed as { message?: string | string[] })?.message;
+      if (Array.isArray(m)) message = m.join(", ");
+      else if (typeof m === "string") message = m;
+    } catch {
+      /* respuesta sin json */
+    }
+    throw new ApiError(res.status, message, parsed);
+  }
+
+  if (res.status === 204) return undefined as T;
+  const text = await res.text();
+  if (!text) return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as unknown as T;
+  }
+}
+
 export const api = {
   get: <T = unknown>(path: string, signal?: AbortSignal) =>
     apiFetch<T>(path, { method: "GET", signal }),
+  postForm: apiPostForm,
   post: <T = unknown>(
     path: string,
     body?: unknown,
