@@ -68,6 +68,8 @@ export const ENDPOINTS = {
   kycStatus: "/kyc/status",
   kycSubmit: "/kyc/submit",
   kycVerifyDocuments: "/kyc/verify-documents",
+  kycHandoffStart: "/kyc/handoff/start",
+  kycHandoffVerify: "/kyc/handoff/verify",
 
   // P2P (order book entre usuarios — protegido)
   p2pOrders: (side?: string, asset?: string) => {
@@ -100,6 +102,8 @@ export const ENDPOINTS = {
     status ? `/admin/kyc?status=${encodeURIComponent(status)}` : "/admin/kyc",
   adminPayments: (type?: string) =>
     type ? `/admin/payments?type=${encodeURIComponent(type)}` : "/admin/payments",
+  // tesoreria / fees consolidados de la plataforma (operador backoffice)
+  adminTreasury: "/admin/treasury",
 
   // P2P — arbitraje de disputas (operador backoffice — protegido)
   adminP2pDisputes: "/admin/p2p/disputes",

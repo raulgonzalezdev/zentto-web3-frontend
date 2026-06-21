@@ -506,3 +506,102 @@ export interface KycSubmitInput {
   nationality?: string;
   [k: string]: unknown;
 }
+
+/** Tipo de documento de identidad (replica exacta de la app móvil, extensible). */
+export interface KycDocumentTypeDef {
+  /** Valor enviado al backend en el campo `documentType`. */
+  value: string;
+  /** Etiqueta visible al usuario. */
+  label: string;
+  /** true → requiere foto del dorso (3 fotos: frente, dorso, selfie). */
+  hasBack: boolean;
+  /** Pista de captura para el usuario. */
+  hint: string;
+}
+
+/**
+ * Catálogo de tipos de documento aceptados. Replica exacta de la app móvil.
+ * Extensible: agregar un objeto aquí lo habilita en todos los flujos.
+ */
+export const KYC_DOCUMENT_TYPES: KycDocumentTypeDef[] = [
+  {
+    value: "id_card",
+    label: "Cédula de identidad",
+    hasBack: false,
+    hint: "En Venezuela la cédula tiene los datos solo en el anverso.",
+  },
+  {
+    value: "passport",
+    label: "Pasaporte",
+    hasBack: false,
+    hint: "Fotografía la página con tu foto y la zona de datos (MRZ).",
+  },
+  {
+    value: "drivers_license",
+    label: "Licencia de conducir",
+    hasBack: true,
+    hint: "Necesitamos el frente y el dorso de tu licencia.",
+  },
+  {
+    value: "residence_permit",
+    label: "Permiso de residencia",
+    hasBack: true,
+    hint: "Necesitamos el frente y el dorso del permiso.",
+  },
+  {
+    value: "rif",
+    label: "RIF",
+    hasBack: false,
+    hint: "Fotografía tu RIF completo y legible.",
+  },
+  {
+    value: "nit",
+    label: "NIT",
+    hasBack: false,
+    hint: "Fotografía tu NIT completo y legible.",
+  },
+];
+
+/** Respuesta de POST /kyc/handoff/start (token corto para continuar en móvil). */
+export interface KycHandoffStart {
+  token: string;
+  expiresInSec: number;
+}
+
+/* ---------- Tesorería / fees consolidados (operador backoffice) ---------- */
+
+/** Tarifas vigentes de comisión de la plataforma. */
+export interface TreasuryRates {
+  p2pPct: number;
+  depositPct: number;
+  withdrawPct: number;
+  withdrawNetworkFee: number;
+  minFee: number;
+  [k: string]: unknown;
+}
+
+/** Ingreso de fees consolidado por asset (cuenta system/fees). */
+export interface FeeRevenueRow {
+  asset: string;
+  balance: string;
+  available: string;
+  held: string;
+  [k: string]: unknown;
+}
+
+/** Respaldo on-chain (custodia de saldos de usuarios) por asset. */
+export interface CustodyRow {
+  asset: string;
+  balance: string;
+  [k: string]: unknown;
+}
+
+/** Consolidado de tesorería / fees (GET /admin/treasury). */
+export interface AdminTreasury {
+  rates: TreasuryRates;
+  feeRevenue: FeeRevenueRow[];
+  custody: CustodyRow[];
+  masterWallet: string | null;
+  onchain: Record<string, unknown> | null;
+  [k: string]: unknown;
+}

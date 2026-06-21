@@ -17,6 +17,7 @@ import StorefrontIcon from "@mui/icons-material/Storefront";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import GavelIcon from "@mui/icons-material/Gavel";
 import BalanceIcon from "@mui/icons-material/Balance";
+import SavingsIcon from "@mui/icons-material/Savings";
 import type { UserRole } from "@/lib/types";
 
 export interface NavItem {
@@ -24,11 +25,15 @@ export interface NavItem {
   href: string;
   icon: SvgIconComponent;
   hint?: string;
+  /** Si true, no se muestra en el menú (el código de la página se conserva). */
+  hidden?: boolean;
 }
 
 export interface NavSection {
   title: string;
   items: NavItem[];
+  /** Si true, la sección entera se oculta del menú (código intacto). */
+  hidden?: boolean;
 }
 
 /* ---------- Items reutilizables ---------- */
@@ -101,6 +106,12 @@ const ADMIN_NAV: NavSection[] = [
         icon: BalanceIcon,
         hint: "Arbitraje de trades P2P en disputa",
       },
+      {
+        label: "Fees / Tesorería",
+        href: "/fees",
+        icon: SavingsIcon,
+        hint: "Comisiones ganadas por la plataforma (consolidado)",
+      },
     ],
   },
   {
@@ -133,7 +144,11 @@ const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
+    // Minería / sandbox blockchain: ocultos del menú a pedido del producto.
+    // El código de las páginas (/wallets, /minado, /explorer, etc.) se conserva
+    // intacto; solo se apaga su visibilidad en el nav.
     title: "Sandbox (cadena didactica)",
+    hidden: true,
     items: [
       {
         label: "Wallets",
@@ -239,8 +254,13 @@ const USER_NAV: NavSection[] = [
  * `admin`/`operator` ven el backoffice de operación; `user` ve su banca personal.
  */
 export function buildNavSections(role?: UserRole): NavSection[] {
-  if (role === "admin" || role === "operator") return ADMIN_NAV;
-  return USER_NAV;
+  const all = role === "admin" || role === "operator" ? ADMIN_NAV : USER_NAV;
+  // Filtra secciones e items marcados como `hidden` (p.ej. minería/sandbox),
+  // sin alterar el código de las páginas correspondientes.
+  return all
+    .filter((s) => !s.hidden)
+    .map((s) => ({ ...s, items: s.items.filter((i) => !i.hidden) }))
+    .filter((s) => s.items.length > 0);
 }
 
 /** Rutas exclusivas de backoffice (admin/operator). Un `user` no debe acceder. */
@@ -250,6 +270,7 @@ export const ADMIN_ROUTES = [
   "/transacciones",
   "/kyc",
   "/disputas",
+  "/fees",
   "/onchain",
   "/wallets",
   "/enviar",

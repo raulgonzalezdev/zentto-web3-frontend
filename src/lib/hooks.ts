@@ -55,6 +55,8 @@ import type {
   AdminP2pDispute,
   AdminP2pMessage,
   P2pResolveInput,
+  KycHandoffStart,
+  AdminTreasury,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -398,6 +400,97 @@ export function useKycVerifyDocuments() {
     mutationFn: (input) =>
       api.post<KycStatusView>(ENDPOINTS.kycVerifyDocuments, input ?? undefined),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["kyc", "status"] }),
+  });
+}
+
+/* ---------- KYC: handoff al móvil (QR) + captura de documentos ---------- */
+
+/** Campos de captura: imágenes + metadatos para verify-documents / handoff/verify. */
+export interface KycDocsInput {
+  frontImage: Blob;
+  backImage?: Blob | null;
+  selfie?: Blob | null;
+  fullName?: string;
+  documentType?: string;
+}
+
+/** Arma el FormData con los nombres de campo que espera el backend. */
+function buildKycForm(input: KycDocsInput, token?: string): FormData {
+  const fd = new FormData();
+  fd.append("front_image", input.frontImage, "front.jpg");
+  if (input.backImage) fd.append("back_image", input.backImage, "back.jpg");
+  if (input.selfie) fd.append("selfie", input.selfie, "selfie.jpg");
+  if (input.fullName) fd.append("fullName", input.fullName);
+  if (input.documentType) fd.append("documentType", input.documentType);
+  if (token) fd.append("token", token);
+  return fd;
+}
+
+/** Verificación de documentos del propio usuario subiendo imágenes (multipart). */
+export function useKycVerifyDocumentsUpload() {
+  const qc = useQueryClient();
+  return useMutation<KycStatusView, Error, KycDocsInput>({
+    mutationFn: (input) =>
+      api.postForm<KycStatusView>(
+        ENDPOINTS.kycVerifyDocuments,
+        buildKycForm(input),
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["kyc", "status"] }),
+  });
+}
+
+/** Emite un token corto (15 min) para continuar la verificación en el móvil. */
+export function useKycHandoffStart() {
+  return useMutation<KycHandoffStart, Error, void>({
+    mutationFn: () => api.post<KycHandoffStart>(ENDPOINTS.kycHandoffStart),
+  });
+}
+
+/**
+ * Sube las imágenes desde el móvil (página pública /verificar) usando el token
+ * del handoff. NO requiere sesión: se autentica con el `token` en el body.
+ */
+export function useKycHandoffVerify() {
+  return useMutation<
+    KycStatusView,
+    Error,
+    KycDocsInput & { token: string }
+  >({
+    mutationFn: ({ token, ...input }) =>
+      api.postForm<KycStatusView>(
+        ENDPOINTS.kycHandoffVerify,
+        buildKycForm(input, token),
+        { requireAuth: false },
+      ),
+  });
+}
+
+/**
+ * Estado KYC con polling activo (para el desktop que espera al móvil).
+ * Deja de pollear automáticamente al llegar a un estado terminal.
+ */
+export function useKycStatusPolling(active: boolean) {
+  return useQuery<KycStatusView>({
+    queryKey: ["kyc", "status"],
+    queryFn: () => api.get<KycStatusView>(ENDPOINTS.kycStatus),
+    enabled: active,
+    refetchInterval: (q) => {
+      if (!active) return false;
+      const s = (q.state.data as KycStatusView | undefined)?.status;
+      if (s === "approved" || s === "rejected" || s === "in_review") return false;
+      return 3000;
+    },
+  });
+}
+
+/* ---------- Tesorería / fees consolidados (operador backoffice) ---------- */
+
+/** Consolidado de fees ganados por la plataforma (GET /admin/treasury). */
+export function useAdminTreasury() {
+  return useQuery<AdminTreasury>({
+    queryKey: ["admin", "treasury"],
+    queryFn: () => api.get<AdminTreasury>(ENDPOINTS.adminTreasury),
+    refetchInterval: 30_000,
   });
 }
 
