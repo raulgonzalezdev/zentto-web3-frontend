@@ -74,7 +74,7 @@ const ADMIN_NAV: NavSection[] = [
         label: "Panel",
         href: "/",
         icon: DashboardIcon,
-        hint: "Metricas de operacion del neobanco",
+        hint: "Metricas de operacion de Zentto",
       },
       {
         label: "Usuarios",
@@ -86,7 +86,7 @@ const ADMIN_NAV: NavSection[] = [
         label: "Transacciones",
         href: "/transacciones",
         icon: SwapHorizIcon,
-        hint: "Todos los movimientos del neobanco",
+        hint: "Todos los movimientos de Zentto",
       },
       {
         label: "KYC / Revisión",
@@ -187,11 +187,11 @@ const ADMIN_NAV: NavSection[] = [
   LEGAL_SECTION,
 ];
 
-/* ---------- Menú personal (usuario del neobanco) ---------- */
+/* ---------- Menú personal (usuario de Zentto) ---------- */
 
 const USER_NAV: NavSection[] = [
   {
-    title: "Mi banco",
+    title: "Mi cuenta",
     items: [
       {
         label: "Mi cuenta",

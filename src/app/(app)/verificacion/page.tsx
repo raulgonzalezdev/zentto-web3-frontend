@@ -49,7 +49,7 @@ const STATUS_META: Record<
   approved: {
     label: "Verificado",
     color: "success",
-    desc: "Tu identidad fue verificada. Tienes acceso completo al neobanco.",
+    desc: "Tu identidad fue verificada. Tienes acceso completo a Zentto.",
   },
   rejected: {
     label: "Rechazado",
@@ -131,7 +131,7 @@ export default function VerificacionPage() {
     <Box>
       <PageHeader
         title="Verificación KYC"
-        subtitle="Verifica tu identidad para operar sin límites en el neobanco."
+        subtitle="Verifica tu identidad para operar sin límites en Zentto."
         actions={
           <Button
             variant="outlined"

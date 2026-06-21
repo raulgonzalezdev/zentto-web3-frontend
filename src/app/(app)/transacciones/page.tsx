@@ -108,7 +108,7 @@ export default function TransaccionesPage() {
     <Box>
       <PageHeader
         title="Transacciones"
-        subtitle="Todos los movimientos del neobanco: depósitos, retiros, transferencias y créditos."
+        subtitle="Todos los movimientos de Zentto: depósitos, retiros, transferencias y créditos."
         actions={
           <Button
             variant="outlined"

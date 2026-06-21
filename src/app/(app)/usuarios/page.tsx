@@ -97,7 +97,7 @@ export default function UsuariosPage() {
     <Box>
       <PageHeader
         title="Usuarios"
-        subtitle="Clientes del neobanco con su estado KYC, saldos custodiados y 2FA."
+        subtitle="Clientes de Zentto con su estado KYC, saldos custodiados y 2FA."
         actions={
           <Button
             variant="outlined"

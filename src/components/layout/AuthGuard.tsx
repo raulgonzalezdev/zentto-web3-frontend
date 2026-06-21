@@ -70,7 +70,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           <BlockIcon color="disabled" sx={{ fontSize: 56 }} />
           <Typography variant="h6">Sin acceso</Typography>
           <Typography variant="body2" color="text.secondary" maxWidth={420}>
-            Esta sección es exclusiva del equipo de operación del neobanco. Tu
+            Esta sección es exclusiva del equipo de operación de Zentto. Tu
             cuenta no tiene permisos para verla.
           </Typography>
           <Button variant="contained" onClick={() => router.replace("/cuenta")}>
