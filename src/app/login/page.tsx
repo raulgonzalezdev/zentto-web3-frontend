@@ -128,6 +128,15 @@ export default function LoginPage() {
           <Button type="submit" variant="contained" size="large" disabled={loading}>
             {loading ? "Entrando…" : "Entrar"}
           </Button>
+          <MuiLink
+            component={Link}
+            href="/recuperar"
+            underline="hover"
+            variant="body2"
+            sx={{ textAlign: "center" }}
+          >
+            ¿Olvidaste tu contraseña?
+          </MuiLink>
         </Stack>
       </Box>
       <Typography variant="body2" sx={{ mt: 3, textAlign: "center" }} color="text.secondary">

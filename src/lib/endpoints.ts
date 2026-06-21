@@ -17,6 +17,9 @@ export const ENDPOINTS = {
   twoFaSetup: "/auth/2fa/setup",
   twoFaEnable: "/auth/2fa/enable",
   twoFaDisable: "/auth/2fa/disable",
+  verifyEmail: "/auth/verify-email",
+  forgotPassword: "/auth/forgot-password",
+  resetPassword: "/auth/reset-password",
 
   // chain / explorer (publico)
   health: "/health",
