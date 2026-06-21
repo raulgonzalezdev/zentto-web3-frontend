@@ -16,6 +16,7 @@ import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import GavelIcon from "@mui/icons-material/Gavel";
+import BalanceIcon from "@mui/icons-material/Balance";
 import type { UserRole } from "@/lib/types";
 
 export interface NavItem {
@@ -94,6 +95,12 @@ const ADMIN_NAV: NavSection[] = [
         hint: "Verificaciones de identidad y decisiones",
       },
       P2P_ITEM,
+      {
+        label: "Disputas P2P",
+        href: "/disputas",
+        icon: BalanceIcon,
+        hint: "Arbitraje de trades P2P en disputa",
+      },
     ],
   },
   {
@@ -242,6 +249,7 @@ export const ADMIN_ROUTES = [
   "/usuarios",
   "/transacciones",
   "/kyc",
+  "/disputas",
   "/onchain",
   "/wallets",
   "/enviar",

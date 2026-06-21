@@ -101,6 +101,14 @@ export const ENDPOINTS = {
   adminPayments: (type?: string) =>
     type ? `/admin/payments?type=${encodeURIComponent(type)}` : "/admin/payments",
 
+  // P2P — arbitraje de disputas (operador backoffice — protegido)
+  adminP2pDisputes: "/admin/p2p/disputes",
+  adminP2pTrade: (id: string) => `/admin/p2p/trades/${encodeURIComponent(id)}`,
+  adminP2pTradeMessages: (id: string) =>
+    `/admin/p2p/trades/${encodeURIComponent(id)}/messages`,
+  adminP2pTradeResolve: (id: string) =>
+    `/admin/p2p/trades/${encodeURIComponent(id)}/resolve`,
+
   // on-chain EVM (Sepolia — publico)
   evmInfo: "/evm/info",
   evmAddress: (address: string) => `/evm/address/${encodeURIComponent(address)}`,

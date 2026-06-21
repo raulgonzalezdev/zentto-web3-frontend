@@ -52,6 +52,9 @@ import type {
   P2pAsset,
   PaymentMethod,
   PaymentMethodInput,
+  AdminP2pDispute,
+  AdminP2pMessage,
+  P2pResolveInput,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -482,6 +485,53 @@ export function useP2pCancelTrade() {
   return useMutation<P2pTrade, Error, { id: string }>({
     mutationFn: ({ id }) => api.post<P2pTrade>(ENDPOINTS.p2pTradeCancel(id)),
     onSuccess: invalidate,
+  });
+}
+
+/* ---------- P2P — arbitraje de disputas (operador backoffice) ---------- */
+
+/** Cola de trades en disputa (GET /admin/p2p/disputes). */
+export function useAdminP2pDisputes() {
+  return useQuery<AdminP2pDispute[]>({
+    queryKey: ["admin", "p2p", "disputes"],
+    queryFn: () => api.get<AdminP2pDispute[]>(ENDPOINTS.adminP2pDisputes),
+    refetchInterval: 15_000,
+  });
+}
+
+/** Detalle de un trade (GET /admin/p2p/trades/:id). */
+export function useAdminP2pTrade(id: string | null) {
+  return useQuery<AdminP2pDispute>({
+    queryKey: ["admin", "p2p", "trade", id],
+    queryFn: () => api.get<AdminP2pDispute>(ENDPOINTS.adminP2pTrade(id as string)),
+    enabled: !!id,
+  });
+}
+
+/** Chat completo de un trade, con evidencias (GET /admin/p2p/trades/:id/messages). */
+export function useAdminP2pTradeMessages(id: string | null) {
+  return useQuery<AdminP2pMessage[]>({
+    queryKey: ["admin", "p2p", "trade", id, "messages"],
+    queryFn: () =>
+      api.get<AdminP2pMessage[]>(ENDPOINTS.adminP2pTradeMessages(id as string)),
+    enabled: !!id,
+  });
+}
+
+/** Resuelve una disputa: release (al comprador) o refund (al vendedor). */
+export function useAdminP2pResolve() {
+  const qc = useQueryClient();
+  return useMutation<
+    { ok: true },
+    Error,
+    { id: string } & P2pResolveInput
+  >({
+    mutationFn: ({ id, decision }) =>
+      api.post<{ ok: true }>(ENDPOINTS.adminP2pTradeResolve(id), { decision }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "p2p", "disputes"] });
+      qc.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
   });
 }
 
