@@ -6,7 +6,7 @@ const SECTIONS: LegalSection[] = [
   {
     heading: "Objeto y aceptación",
     paragraphs: [
-      "Estos Términos y Condiciones regulan el acceso y uso de la plataforma Zentto Web3 (en adelante, “la Plataforma”), un servicio de neobanco custodial que permite mantener saldos en criptoactivos, realizar transferencias internas, depósitos y retiros on-chain, y operar en un mercado entre usuarios (P2P).",
+      "Estos Términos y Condiciones regulan el acceso y uso de la plataforma Zentto Web3 (en adelante, “la Plataforma”), un servicio de finanzas digitales custodial que permite mantener saldos en criptoactivos, realizar transferencias internas, depósitos y retiros on-chain, y operar en un mercado entre usuarios (P2P).",
       "Al registrarte y utilizar la Plataforma aceptas estos Términos en su totalidad. Si no estás de acuerdo con alguna de sus cláusulas, debes abstenerte de usar el servicio.",
     ],
   },
