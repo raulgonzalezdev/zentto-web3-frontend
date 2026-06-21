@@ -428,6 +428,47 @@ export interface P2pTrade {
   [k: string]: unknown;
 }
 
+/* ---------- P2P — arbitraje de disputas (operador backoffice) ---------- */
+
+/** Trade en disputa de la cola del operador (GET /admin/p2p/disputes). */
+export interface AdminP2pDispute {
+  id: string;
+  orderId: string;
+  buyerUserId: string;
+  sellerUserId: string;
+  buyerEmail: string | null;
+  sellerEmail: string | null;
+  asset: P2pAsset;
+  /** Monto de cripto (string decimal). */
+  amount: string;
+  /** Precio unitario en Bs (string decimal). */
+  priceVes: string;
+  status: "disputed" | P2pTradeStatus;
+  disputeReason: string | null;
+  /** userId del que abrió la disputa. */
+  disputeBy: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/** Mensaje del chat de un trade (GET /admin/p2p/trades/:id/messages). */
+export interface AdminP2pMessage {
+  id: string;
+  tradeId: string;
+  senderUserId: string;
+  body: string | null;
+  /** data URL de imagen base64 (evidencia de pago) o null. */
+  attachment: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+export type P2pResolveDecision = "release" | "refund";
+
+export interface P2pResolveInput {
+  decision: P2pResolveDecision;
+}
+
 /* ---------- Métodos de pago del perfil ---------- */
 
 export type PaymentMethodType = "pago_movil" | "bank_account" | string;
