@@ -20,7 +20,7 @@ const SECTIONS: LegalSection[] = [
   {
     heading: "Finalidades del tratamiento",
     paragraphs: [
-      "Prestar el servicio de neobanco custodial, ejecutar tus operaciones y mantener tu cuenta.",
+      "Prestar el servicio de finanzas digitales custodial, ejecutar tus operaciones y mantener tu cuenta.",
       "Cumplir obligaciones legales y regulatorias, en particular las relativas a la prevención de lavado de dinero y financiamiento del terrorismo, lo que incluye verificación de identidad y screening contra listas de sanciones.",
       "Garantizar la seguridad de la Plataforma, prevenir el fraude y atender solicitudes de soporte.",
     ],

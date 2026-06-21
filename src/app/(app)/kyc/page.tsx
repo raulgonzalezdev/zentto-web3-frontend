@@ -194,7 +194,7 @@ export default function KycPage() {
     <Box>
       <PageHeader
         title="KYC / Revisión"
-        subtitle="Todas las verificaciones de identidad del neobanco, con decisión del operador."
+        subtitle="Todas las verificaciones de identidad de Zentto, con decisión del operador."
         actions={
           <Button
             variant="outlined"

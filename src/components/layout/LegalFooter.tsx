@@ -23,7 +23,7 @@ export function LegalFooter() {
         sx={{ pb: 3, px: 1 }}
       >
         <Typography variant="caption" color="text.secondary">
-          © {new Date().getFullYear()} Zentto Web3 — Neobanco custodial
+          © {new Date().getFullYear()} Zentto — El centro de tu dinero · Tu dinero, con libertad.
         </Typography>
         <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
           {LINKS.map((l) => (

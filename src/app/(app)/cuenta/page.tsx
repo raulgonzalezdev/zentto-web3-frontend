@@ -289,7 +289,7 @@ export default function CuentaPage() {
       />
 
       <InfoNote title="Saldo custodiado">
-        Estos son los saldos que el neobanco custodia por ti. <strong>Disponible</strong>{" "}
+        Estos son los saldos que Zentto custodia por ti. <strong>Disponible</strong>{" "}
         es lo que puedes usar; <strong>retenido</strong> esta bloqueado por
         operaciones en curso. El boton <strong>faucet</strong> acredita saldo de
         prueba (solo en desarrollo).
