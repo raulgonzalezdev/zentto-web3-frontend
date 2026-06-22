@@ -337,7 +337,7 @@ export interface AdminPayment {
   [k: string]: unknown;
 }
 
-/* ---------- On-chain (EVM real — Sepolia) ---------- */
+/* ---------- On-chain (EVM real — mainnet multi-red: BSC/Ethereum/Polygon) ---------- */
 
 export interface EvmInfo {
   network?: string;
@@ -643,5 +643,44 @@ export interface AdminCustody {
 export interface SweepResult {
   swept: number;
   gasTopUps: number;
+  [k: string]: unknown;
+}
+
+/* ---------- Actividad on-chain real (operador backoffice) ---------- */
+
+/** Depósito on-chain detectado (GET /admin/onchain-activity → deposits[]). */
+export interface OnchainDeposit {
+  kind: "deposit";
+  network: string;
+  asset: string;
+  amount: string;
+  txHash: string;
+  userId: string;
+  blockNumber: string | number | null;
+  /** URL al explorer ya armada por el backend; puede ser null. */
+  explorerUrl: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/** Retiro on-chain ejecutado (GET /admin/onchain-activity → withdrawals[]). */
+export interface OnchainWithdrawal {
+  kind: "withdrawal";
+  network: string;
+  asset: string;
+  amount: string;
+  txHash: string;
+  userId: string;
+  status: string;
+  /** URL al explorer ya armada por el backend; puede ser null. */
+  explorerUrl: string | null;
+  createdAt: number | string;
+  [k: string]: unknown;
+}
+
+/** Traza on-chain real consolidada (GET /admin/onchain-activity). */
+export interface AdminOnchainActivity {
+  deposits: OnchainDeposit[];
+  withdrawals: OnchainWithdrawal[];
   [k: string]: unknown;
 }

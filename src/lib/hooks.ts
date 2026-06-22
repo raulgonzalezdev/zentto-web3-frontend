@@ -59,6 +59,7 @@ import type {
   AdminTreasury,
   AdminCustody,
   SweepResult,
+  AdminOnchainActivity,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -519,6 +520,18 @@ export function useAdminSweep() {
       qc.invalidateQueries({ queryKey: ["admin", "custody"] });
       qc.invalidateQueries({ queryKey: ["admin", "treasury"] });
     },
+  });
+}
+
+/* ---------- Actividad on-chain real (operador backoffice) ---------- */
+
+/** Traza on-chain real: depósitos + retiros con txHash y link al explorer. */
+export function useAdminOnchainActivity() {
+  return useQuery<AdminOnchainActivity>({
+    queryKey: ["admin", "onchain-activity"],
+    queryFn: () =>
+      api.get<AdminOnchainActivity>(ENDPOINTS.adminOnchainActivity),
+    refetchInterval: 30_000,
   });
 }
 

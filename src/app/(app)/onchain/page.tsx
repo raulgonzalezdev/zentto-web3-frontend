@@ -22,20 +22,57 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { InfoNote } from "@/components/ui/InfoNote";
 import { Copyable } from "@/components/ui/Copyable";
-import { useEvmInfo, useEvmAddress, useEvmTx } from "@/lib/hooks";
+import {
+  ZenttoDataGrid,
+  type ColumnDef,
+  type GridRow,
+} from "@/components/data-grid/ZenttoDataGrid";
+import {
+  useEvmInfo,
+  useEvmAddress,
+  useEvmTx,
+  useAdminOnchainActivity,
+} from "@/lib/hooks";
 import { shortHash } from "@/lib/format";
 
-/** Base del explorer Sepolia (el backend puede sobreescribirla en /evm/info). */
-const SEPOLIA_EXPLORER = "https://sepolia.etherscan.io";
+/** Base del explorer por defecto (BSC mainnet); el backend puede sobreescribirla en /evm/info. */
+const DEFAULT_EXPLORER = "https://bscscan.com";
 
 function explorerBase(info?: { explorer?: string }): string {
   const e = info?.explorer;
   if (typeof e === "string" && e.startsWith("http")) return e.replace(/\/$/, "");
-  return SEPOLIA_EXPLORER;
+  return DEFAULT_EXPLORER;
+}
+
+/** Escapa texto para insertarlo de forma segura en el HTML de una celda del grid. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Normaliza un timestamp (epoch seg/ms o ISO) a ISO-8601 para el grid. */
+function toIso(ts: number | string | null | undefined): string {
+  if (ts === null || ts === undefined) return "";
+  let ms: number;
+  if (typeof ts === "string" && /^\d+$/.test(ts)) {
+    const n = Number(ts);
+    ms = n < 1e12 ? n * 1000 : n;
+  } else if (typeof ts === "number") {
+    ms = ts < 1e12 ? ts * 1000 : ts;
+  } else {
+    const d = new Date(ts as string);
+    return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+  }
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString();
 }
 
 export default function OnchainPage() {
   const info = useEvmInfo();
+  const activity = useAdminOnchainActivity();
 
   // address lookup
   const [addrInput, setAddrInput] = React.useState("");
@@ -49,16 +86,80 @@ export default function OnchainPage() {
 
   const base = explorerBase(info.data);
 
+  // Filas consolidadas de la traza on-chain real (depósitos + retiros).
+  const activityRows: GridRow[] = React.useMemo(() => {
+    const data = activity.data;
+    if (!data) return [];
+    const deposits = (data.deposits ?? []).map((d) => ({
+      id: `dep:${d.txHash}:${d.network}`,
+      kind: "Depósito",
+      network: d.network,
+      asset: d.asset,
+      amount: d.amount,
+      txHash: d.txHash,
+      explorerUrl: d.explorerUrl ?? "",
+      detalle: d.blockNumber != null ? `bloque ${d.blockNumber}` : "—",
+      userId: d.userId,
+      createdAt: toIso(d.createdAt),
+    }));
+    const withdrawals = (data.withdrawals ?? []).map((w) => ({
+      id: `wd:${w.txHash}:${w.network}`,
+      kind: "Retiro",
+      network: w.network,
+      asset: w.asset,
+      amount: w.amount,
+      txHash: w.txHash,
+      explorerUrl: w.explorerUrl ?? "",
+      detalle: w.status ?? "—",
+      userId: w.userId,
+      createdAt: toIso(w.createdAt),
+    }));
+    return [...deposits, ...withdrawals].sort((a, b) =>
+      String(b.createdAt).localeCompare(String(a.createdAt)),
+    );
+  }, [activity.data]);
+
+  const activityCols: ColumnDef[] = [
+    {
+      field: "kind",
+      header: "Tipo",
+      width: 120,
+      statusColors: { Depósito: "success", Retiro: "warning" },
+    },
+    { field: "network", header: "Red", width: 110 },
+    { field: "asset", header: "Asset", width: 90 },
+    { field: "amount", header: "Monto", minWidth: 120 },
+    {
+      field: "txHash",
+      header: "Tx on-chain",
+      minWidth: 200,
+      // Hash acortado + link al explorer (explorerUrl ya viene armado del backend).
+      renderCell: (value, row) => {
+        const hashStr = String(value ?? "");
+        if (!hashStr) return "—";
+        const short = esc(shortHash(hashStr, 10, 8));
+        const url = String((row as GridRow).explorerUrl ?? "");
+        if (!url) return `<span title="${esc(hashStr)}">${short}</span>`;
+        return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="${esc(hashStr)}" style="text-decoration:underline">${short} ↗</a>`;
+      },
+    },
+    { field: "detalle", header: "Estado / bloque", minWidth: 140 },
+    { field: "createdAt", header: "Fecha", type: "datetime", minWidth: 170 },
+  ];
+
   return (
     <Box>
       <PageHeader
         title="On-chain (EVM)"
-        subtitle="Red EVM real (Sepolia testnet) — dinero on-chain, no el sandbox."
+        subtitle="Redes EVM reales de producción (BSC, Ethereum, Polygon mainnet) — dinero on-chain real."
         actions={
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
-            onClick={() => info.refetch()}
+            onClick={() => {
+              info.refetch();
+              activity.refetch();
+            }}
           >
             Actualizar
           </Button>
@@ -66,10 +167,13 @@ export default function OnchainPage() {
       />
 
       <InfoNote title="¿Qué es esto?">
-        A diferencia del <strong>Sandbox</strong> (cadena didáctica), aquí
-        consultas una red EVM real (<strong>Sepolia</strong>). Puedes ver el
-        último bloque, el saldo nativo (ETH) y USDC de cualquier dirección, y el
-        estado de una transacción on-chain.
+        Consulta las <strong>redes EVM reales de producción</strong> que usa el
+        neobanco: <strong>BSC</strong> (chainId 56), <strong>Ethereum</strong> y{" "}
+        <strong>Polygon</strong> mainnet, con stablecoins{" "}
+        <strong>USDT / USDC</strong>. Puedes ver el último bloque, el saldo
+        nativo y de stablecoin de cualquier dirección, el estado de una
+        transacción on-chain y la <strong>traza real</strong> de depósitos y
+        retiros del custodio.
       </InfoNote>
 
       <Grid container spacing={2}>
@@ -87,7 +191,7 @@ export default function OnchainPage() {
               ) : (
                 <Stack spacing={1.25}>
                   <Row label="Red">
-                    {String(info.data?.network ?? "Sepolia")}
+                    {String(info.data?.network ?? "—")}
                   </Row>
                   {info.data?.chainId !== undefined && (
                     <Row label="Chain ID">{String(info.data.chainId)}</Row>
@@ -272,6 +376,43 @@ export default function OnchainPage() {
                   </Stack>
                 )}
               </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Actividad on-chain real (traza de depósitos + retiros del custodio) */}
+        <Grid size={{ xs: 12 }}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 0.5 }}>
+                Actividad on-chain
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Traza real de depósitos detectados y retiros ejecutados en
+                cadena. Cada fila enlaza al explorer de su red.
+              </Typography>
+
+              {activity.isError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  No se pudo cargar la actividad on-chain. Verifica tu sesión de
+                  operador y el backend (/admin/onchain-activity).
+                </Alert>
+              )}
+
+              <ZenttoDataGrid
+                columns={activityCols}
+                rows={activityRows}
+                loading={activity.isLoading}
+                pageSize={25}
+                enableSearch
+              />
+              {!activity.isLoading &&
+                activityRows.length === 0 &&
+                !activity.isError && (
+                  <Typography color="text.secondary" sx={{ mt: 2 }}>
+                    No hay actividad on-chain registrada todavía.
+                  </Typography>
+                )}
             </CardContent>
           </Card>
         </Grid>
