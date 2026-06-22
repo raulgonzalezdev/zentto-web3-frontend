@@ -225,9 +225,11 @@ export default function CustodiaPage() {
         held[t.asset] = (held[t.asset] ?? 0) + toNum(t.balance);
       }
     }
+    // La cuenta contable de custodia es NEGATIVA por doble entrada (se debita al
+    // acreditar a usuarios). El pasivo "se debe a usuarios" es su valor en positivo.
     const owed: Record<string, number> = {};
     for (const c of custodyBackup) {
-      owed[c.asset] = (owed[c.asset] ?? 0) + toNum(c.balance);
+      owed[c.asset] = (owed[c.asset] ?? 0) + -toNum(c.balance);
     }
     const assets = Array.from(
       new Set([...Object.keys(held), ...Object.keys(owed)]),
