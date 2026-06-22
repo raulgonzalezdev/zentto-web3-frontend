@@ -57,6 +57,8 @@ import type {
   P2pResolveInput,
   KycHandoffStart,
   AdminTreasury,
+  AdminCustody,
+  SweepResult,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -491,6 +493,32 @@ export function useAdminTreasury() {
     queryKey: ["admin", "treasury"],
     queryFn: () => api.get<AdminTreasury>(ENDPOINTS.adminTreasury),
     refetchInterval: 30_000,
+  });
+}
+
+/* ---------- Custodia: hot wallet on-chain por red (operador backoffice) ---------- */
+
+/** Saldo on-chain REAL del hot wallet por red (gas + stablecoins). */
+export function useAdminCustody() {
+  return useQuery<AdminCustody>({
+    queryKey: ["admin", "custody"],
+    queryFn: () => api.get<AdminCustody>(ENDPOINTS.adminCustody),
+    refetchInterval: 30_000,
+  });
+}
+
+/** Dispara el barrido de depósitos → hot wallet; refresca custodia y tesorería. */
+export function useAdminSweep() {
+  const qc = useQueryClient();
+  return useMutation<SweepResult, Error, void>({
+    mutationFn: () =>
+      api.post<SweepResult>(ENDPOINTS.adminSweep, undefined, {
+        idempotencyKey: true,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "custody"] });
+      qc.invalidateQueries({ queryKey: ["admin", "treasury"] });
+    },
   });
 }
 

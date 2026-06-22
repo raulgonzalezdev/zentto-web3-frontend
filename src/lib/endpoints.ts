@@ -104,6 +104,9 @@ export const ENDPOINTS = {
     type ? `/admin/payments?type=${encodeURIComponent(type)}` : "/admin/payments",
   // tesoreria / fees consolidados de la plataforma (operador backoffice)
   adminTreasury: "/admin/treasury",
+  // custodia: hot wallet on-chain por red + barrido de depositos (operador)
+  adminCustody: "/admin/custody",
+  adminSweep: "/admin/sweep",
 
   // P2P — arbitraje de disputas (operador backoffice — protegido)
   adminP2pDisputes: "/admin/p2p/disputes",
