@@ -107,6 +107,8 @@ export const ENDPOINTS = {
   // custodia: hot wallet on-chain por red + barrido de depositos (operador)
   adminCustody: "/admin/custody",
   adminSweep: "/admin/sweep",
+  // traza on-chain real consolidada (depositos + retiros) — operador
+  adminOnchainActivity: "/admin/onchain-activity",
 
   // P2P — arbitraje de disputas (operador backoffice — protegido)
   adminP2pDisputes: "/admin/p2p/disputes",
@@ -116,7 +118,7 @@ export const ENDPOINTS = {
   adminP2pTradeResolve: (id: string) =>
     `/admin/p2p/trades/${encodeURIComponent(id)}/resolve`,
 
-  // on-chain EVM (Sepolia — publico)
+  // on-chain EVM (mainnet multi-red — publico)
   evmInfo: "/evm/info",
   evmAddress: (address: string) => `/evm/address/${encodeURIComponent(address)}`,
   evmTx: (hash: string) => `/evm/tx/${encodeURIComponent(hash)}`,

@@ -17,9 +17,11 @@ import {
   Chip,
   Tabs,
   Tab,
+  Link as MuiLink,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { InfoNote } from "@/components/ui/InfoNote";
 import {
@@ -45,6 +47,19 @@ function toIso(ts: number | string | null | undefined): string {
   }
   const d = new Date(ms);
   return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
+/** Base del dashboard propio de Zentto KYC para abrir el detalle de una sesión. */
+const ZENTTO_KYC_BASE = "https://kyc.zentto.net/review";
+
+/**
+ * Extrae la referencia de sesión del proveedor desde el payload KYC.
+ * El backend puede mandarla como providerRef / providerSessionId / sessionId.
+ */
+function providerRef(v: AdminKyc): string | null {
+  const rec = v as Record<string, unknown>;
+  const ref = rec.providerRef ?? rec.providerSessionId ?? rec.sessionId;
+  return typeof ref === "string" && ref.trim() ? ref.trim() : null;
 }
 
 /** Tabs -> filtro de estado para GET /admin/kyc?status=. */
@@ -121,7 +136,13 @@ export default function KycPage() {
       width: 130,
       statusColors: { Limpio: "success", Coincidencia: "error" },
     },
-    { field: "provider", header: "Proveedor", width: 110 },
+    {
+      field: "provider",
+      header: "Proveedor",
+      width: 130,
+      statusColors: { "zentto-kyc": "primary", didit: "default" },
+      statusVariant: "outlined",
+    },
     {
       field: "status",
       header: "Estado",
@@ -304,7 +325,44 @@ export default function KycPage() {
                       : "AML: limpio"
                   }
                 />
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  color={
+                    dialog.verification.provider === "zentto-kyc"
+                      ? "primary"
+                      : "default"
+                  }
+                  label={`Proveedor: ${dialog.verification.provider}`}
+                />
               </Stack>
+
+              {/* KYC propio: enlace al dashboard Zentto KYC. */}
+              {dialog.verification.provider === "zentto-kyc" &&
+                providerRef(dialog.verification) && (
+                  <MuiLink
+                    href={`${ZENTTO_KYC_BASE}/${providerRef(dialog.verification)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Ver detalle en Zentto KYC{" "}
+                    <OpenInNewIcon sx={{ fontSize: 16 }} />
+                  </MuiLink>
+                )}
+
+              {/* Verificaciones históricas (antes del switch a KYC propio). */}
+              {dialog.verification.provider === "didit" && (
+                <Typography variant="caption" color="text.secondary">
+                  Verificación histórica (Didit), anterior al cambio a Zentto
+                  KYC.
+                </Typography>
+              )}
 
               {dialog.verification.amlMatch && (
                 <Alert severity="warning">

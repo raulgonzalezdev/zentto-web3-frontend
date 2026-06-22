@@ -21,6 +21,33 @@ import {
 } from "@/components/data-grid/ZenttoDataGrid";
 import { useAdminPayments } from "@/lib/hooks";
 import type { PaymentType } from "@/lib/types";
+import { shortHash } from "@/lib/format";
+
+/** ¿Es un hash on-chain? EVM (0x… 66 chars) o Tron (T… base58). */
+function isOnchainHash(v: string): boolean {
+  return /^0x[0-9a-fA-F]{40,}$/.test(v) || /^T[1-9A-HJ-NP-Za-km-z]{25,}$/.test(v);
+}
+
+/** Explorer por defecto (BSC mainnet) o derivado de la red de la fila si existe. */
+function explorerTxUrl(hash: string, network?: unknown): string {
+  const net = String(network ?? "").toLowerCase();
+  if (/tron|trc/.test(net) || /^T[1-9A-HJ-NP-Za-km-z]{25,}$/.test(hash)) {
+    return `https://tronscan.org/#/transaction/${hash}`;
+  }
+  if (/eth|ethereum|mainnet/.test(net)) return `https://etherscan.io/tx/${hash}`;
+  if (/polygon|matic/.test(net)) return `https://polygonscan.com/tx/${hash}`;
+  // BSC es la red principal y el fallback por defecto.
+  return `https://bscscan.com/tx/${hash}`;
+}
+
+/** Escapa texto para insertarlo de forma segura en el HTML de una celda del grid. */
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 /** Normaliza un timestamp (epoch seg/ms o ISO) a ISO-8601 para el grid. */
 function toIso(ts: number | string | null | undefined): string {
@@ -64,6 +91,8 @@ export default function TransaccionesPage() {
         amount: p.amount,
         status: p.status,
         counterparty: p.counterparty ?? "—",
+        // network puede venir como campo extra del payload (index signature).
+        network: (p as Record<string, unknown>).network ?? "",
         failureReason: p.failureReason ?? "—",
         createdAt: toIso(p.createdAt),
       })),
@@ -99,7 +128,20 @@ export default function TransaccionesPage() {
         reversed: "error",
       },
     },
-    { field: "counterparty", header: "Contraparte", minWidth: 180 },
+    {
+      field: "counterparty",
+      header: "Hash on-chain / Contraparte",
+      minWidth: 230,
+      // Si el valor es un hash 0x… o T… (Tron), lo acorta y enlaza al explorer.
+      renderCell: (value, row) => {
+        const v = String(value ?? "").trim();
+        if (!v || v === "—") return "—";
+        if (!isOnchainHash(v)) return esc(v);
+        const short = esc(shortHash(v, 10, 8));
+        const url = explorerTxUrl(v, (row as Record<string, unknown>).network);
+        return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="${esc(v)}" style="text-decoration:underline">${short} ↗</a>`;
+      },
+    },
     { field: "failureReason", header: "Motivo de fallo", minWidth: 180 },
     { field: "createdAt", header: "Fecha", type: "datetime", minWidth: 170 },
   ];
@@ -123,8 +165,10 @@ export default function TransaccionesPage() {
       <InfoNote title="Libro de movimientos">
         Filtra por tipo con las pestañas. El <strong>estado</strong> indica si el
         movimiento ya se liquidó; los retiros en proceso pueden requerir
-        reconciliación manual. La columna <strong>motivo de fallo</strong> explica
-        los movimientos fallidos.
+        reconciliación manual. En depósitos y retiros, la columna{" "}
+        <strong>Hash on-chain / Contraparte</strong> enlaza al explorer de la red
+        cuando el valor es un hash de transacción. La columna{" "}
+        <strong>motivo de fallo</strong> explica los movimientos fallidos.
       </InfoNote>
 
       {query.isError && (
