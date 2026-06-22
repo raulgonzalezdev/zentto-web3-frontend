@@ -5,7 +5,7 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "Zentto Web3",
   description:
-    "Blockchain didactica — wallets, minado, explorer, cumplimiento AML y analitica de grafo.",
+    "Neobanco cripto custodial — saldos, transferencias, depósitos y retiros on-chain, P2P y verificación KYC.",
 };
 
 export const viewport: Viewport = {

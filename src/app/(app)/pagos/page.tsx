@@ -103,8 +103,8 @@ export default function PagosPage() {
       />
 
       <InfoNote title="Tu historial">
-        Cada fila es un movimiento custodiado: transferencias internas, créditos
-        de faucet y otros. El <strong>estado</strong> indica si ya se liquidó.
+        Cada fila es un movimiento custodiado: transferencias internas, depósitos,
+        retiros y otros. El <strong>estado</strong> indica si ya se liquidó.
       </InfoNote>
 
       {payments.isError && (

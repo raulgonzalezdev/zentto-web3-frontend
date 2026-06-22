@@ -19,6 +19,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import BalanceIcon from "@mui/icons-material/Balance";
 import SavingsIcon from "@mui/icons-material/Savings";
 import SecurityIcon from "@mui/icons-material/Security";
+import TuneIcon from "@mui/icons-material/Tune";
 import type { UserRole } from "@/lib/types";
 
 export interface NavItem {
@@ -119,6 +120,12 @@ const ADMIN_NAV: NavSection[] = [
         icon: SecurityIcon,
         hint: "Hot wallet on-chain por red, gas y barrido de depósitos",
       },
+      {
+        label: "Configuración",
+        href: "/configuracion",
+        icon: TuneIcon,
+        hint: "Tarifas y parámetros de la plataforma",
+      },
     ],
   },
   {
@@ -128,7 +135,7 @@ const ADMIN_NAV: NavSection[] = [
         label: "Cuenta / Saldo",
         href: "/cuenta",
         icon: AccountBalanceIcon,
-        hint: "Saldo por asset, faucet y transferencias",
+        hint: "Saldo por asset, depósitos y transferencias",
       },
       {
         label: "Pagos",
@@ -279,6 +286,7 @@ export const ADMIN_ROUTES = [
   "/disputas",
   "/fees",
   "/custodia",
+  "/configuracion",
   "/onchain",
   "/wallets",
   "/enviar",
