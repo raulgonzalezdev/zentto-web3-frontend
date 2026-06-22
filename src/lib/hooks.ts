@@ -60,6 +60,10 @@ import type {
   AdminCustody,
   SweepResult,
   AdminOnchainActivity,
+  AdminSetting,
+  AdminSettingUpdate,
+  AdminUserUpdate,
+  AdminUserResetPassword,
 } from "./types";
 
 /* ---------- Chain / Explorer ---------- */
@@ -302,6 +306,28 @@ export function useAdminUsers() {
   });
 }
 
+/** Edita el nombre visible de un usuario (PATCH /admin/users/:id). */
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  return useMutation<AdminUser, Error, { id: string } & AdminUserUpdate>({
+    mutationFn: ({ id, ...body }) =>
+      api.patch<AdminUser>(ENDPOINTS.adminUser(id), body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "users"] }),
+  });
+}
+
+/** Resetea la contraseña de un usuario (POST /admin/users/:id/reset-password). */
+export function useResetUserPassword() {
+  return useMutation<
+    { ok: true } | void,
+    Error,
+    { id: string } & AdminUserResetPassword
+  >({
+    mutationFn: ({ id, ...body }) =>
+      api.post<{ ok: true }>(ENDPOINTS.adminUserResetPassword(id), body),
+  });
+}
+
 /** Verificaciones KYC de todos los usuarios, filtrables por estado. */
 export function useAdminKyc(status?: KycStatus) {
   return useQuery<AdminKyc[]>({
@@ -494,6 +520,33 @@ export function useAdminTreasury() {
     queryKey: ["admin", "treasury"],
     queryFn: () => api.get<AdminTreasury>(ENDPOINTS.adminTreasury),
     refetchInterval: 30_000,
+  });
+}
+
+/* ---------- Parámetros / tarifas editables (operador backoffice) ---------- */
+
+/** Lista de parámetros editables de la plataforma (GET /admin/settings). */
+export function useAdminSettings() {
+  return useQuery<AdminSetting[]>({
+    queryKey: ["admin", "settings"],
+    queryFn: () => api.get<AdminSetting[]>(ENDPOINTS.adminSettings),
+  });
+}
+
+/**
+ * Actualiza un parámetro (PUT /admin/settings) y refresca la lista con la
+ * respuesta del backend (devuelve la lista completa ya actualizada).
+ */
+export function useUpdateSetting() {
+  const qc = useQueryClient();
+  return useMutation<AdminSetting[], Error, AdminSettingUpdate>({
+    mutationFn: (input) =>
+      api.put<AdminSetting[]>(ENDPOINTS.adminSettings, input),
+    onSuccess: (list) => {
+      qc.setQueryData(["admin", "settings"], list);
+      // las tarifas viven también en /admin/treasury → invalidar
+      qc.invalidateQueries({ queryKey: ["admin", "treasury"] });
+    },
   });
 }
 

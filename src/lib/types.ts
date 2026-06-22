@@ -684,3 +684,43 @@ export interface AdminOnchainActivity {
   withdrawals: OnchainWithdrawal[];
   [k: string]: unknown;
 }
+
+/* ---------- Parámetros / tarifas editables (operador backoffice) ---------- */
+
+/** Tipo de dato de un parámetro de configuración. */
+export type AdminSettingType = "percent" | "number" | "bool" | "string";
+
+/**
+ * Parámetro editable de la plataforma (GET /admin/settings).
+ * `value` es el override actual o `null` (usa el default del backend).
+ * Para `percent`, el value es una fracción (0.01 = 1%).
+ */
+export interface AdminSetting {
+  key: string;
+  group: string;
+  label: string;
+  type: AdminSettingType;
+  description?: string | null;
+  min?: number | null;
+  max?: number | null;
+  value: string | number | boolean | null;
+  [k: string]: unknown;
+}
+
+/** Body de PUT /admin/settings. */
+export interface AdminSettingUpdate {
+  key: string;
+  value: string | number | boolean | null;
+}
+
+/* ---------- Gestión de usuarios (operador backoffice) ---------- */
+
+/** Body de PATCH /admin/users/:id. */
+export interface AdminUserUpdate {
+  displayName: string;
+}
+
+/** Body de POST /admin/users/:id/reset-password. */
+export interface AdminUserResetPassword {
+  newPassword: string;
+}

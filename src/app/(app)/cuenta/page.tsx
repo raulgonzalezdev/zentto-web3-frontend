@@ -19,7 +19,6 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import SavingsIcon from "@mui/icons-material/Savings";
 import SendIcon from "@mui/icons-material/Send";
 import CallReceivedIcon from "@mui/icons-material/CallReceived";
 import NorthEastIcon from "@mui/icons-material/NorthEast";
@@ -35,7 +34,6 @@ import {
 } from "@/components/data-grid/ZenttoDataGrid";
 import {
   useAccountBalance,
-  useCredit,
   useTransfer,
   useDepositInfo,
   useDeposits,
@@ -112,7 +110,6 @@ function BalanceCard({ b }: { b: AccountBalance }) {
 
 export default function CuentaPage() {
   const balances = useAccountBalance();
-  const credit = useCredit();
   const transfer = useTransfer();
   const depositInfo = useDepositInfo();
   const deposits = useDeposits();
@@ -123,12 +120,6 @@ export default function CuentaPage() {
     [balances.data],
   );
   const defaultAsset = assets[0] ?? "USDC";
-
-  // --- Faucet (credit) ---
-  const [faucetOpen, setFaucetOpen] = React.useState(false);
-  const [fAsset, setFAsset] = React.useState("");
-  const [fAmount, setFAmount] = React.useState("");
-  const [fError, setFError] = React.useState<string | null>(null);
 
   // --- Transfer ---
   const [trOpen, setTrOpen] = React.useState(false);
@@ -199,29 +190,12 @@ export default function CuentaPage() {
     { field: "createdAt", header: "Detectado", type: "datetime", minWidth: 170 },
   ];
 
-  const openFaucet = () => {
-    setFAsset(defaultAsset);
-    setFAmount("10");
-    setFError(null);
-    setFaucetOpen(true);
-  };
   const openTransfer = () => {
     setTrEmail("");
     setTrAsset(defaultAsset);
     setTrAmount("");
     setTrError(null);
     setTrOpen(true);
-  };
-
-  const submitFaucet = async () => {
-    setFError(null);
-    try {
-      await credit.mutateAsync({ asset: fAsset.trim(), amount: fAmount.trim() });
-      setFaucetOpen(false);
-      setToast(`Acreditado ${fmt(fAmount)} ${fAsset} (faucet dev).`);
-    } catch (e) {
-      setFError(e instanceof Error ? e.message : "No se pudo acreditar.");
-    }
   };
 
   const submitTransfer = async () => {
@@ -257,14 +231,6 @@ export default function CuentaPage() {
             </Button>
             <Button
               variant="outlined"
-              color="secondary"
-              startIcon={<SavingsIcon />}
-              onClick={openFaucet}
-            >
-              Acreditar (faucet dev)
-            </Button>
-            <Button
-              variant="outlined"
               startIcon={<CallReceivedIcon />}
               onClick={() => setDepOpen(true)}
             >
@@ -291,8 +257,7 @@ export default function CuentaPage() {
       <InfoNote title="Saldo custodiado">
         Estos son los saldos que Zentto custodia por ti. <strong>Disponible</strong>{" "}
         es lo que puedes usar; <strong>retenido</strong> esta bloqueado por
-        operaciones en curso. El boton <strong>faucet</strong> acredita saldo de
-        prueba (solo en desarrollo).
+        operaciones en curso.
       </InfoNote>
 
       {toast && (
@@ -320,8 +285,8 @@ export default function CuentaPage() {
         <Card variant="outlined">
           <CardContent>
             <Typography color="text.secondary">
-              Aun no tienes saldo. Usa <strong>Acreditar (faucet dev)</strong>{" "}
-              para crear saldo de prueba.
+              Aun no tienes saldo. Usa <strong>Depositar</strong> para fondear tu
+              cuenta con una transferencia on-chain.
             </Typography>
           </CardContent>
         </Card>
@@ -342,7 +307,7 @@ export default function CuentaPage() {
             Depósitos on-chain
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Transferencias USDC detectadas hacia tu dirección de depósito y
+            Transferencias USDT/USDC detectadas hacia tu dirección de depósito y
             acreditadas a tu saldo.
           </Typography>
           {deposits.isError && (
@@ -464,58 +429,6 @@ export default function CuentaPage() {
             }
           >
             {withdraw.isPending ? "Enviando…" : "Retirar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Dialogo faucet */}
-      <Dialog open={faucetOpen} onClose={() => setFaucetOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Acreditar saldo (faucet dev)</DialogTitle>
-        <DialogContent dividers>
-          {fError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {fError}
-            </Alert>
-          )}
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {assets.length > 0 ? (
-              <TextField
-                select
-                label="Asset"
-                value={fAsset}
-                onChange={(e) => setFAsset(e.target.value)}
-              >
-                {assets.map((a) => (
-                  <MenuItem key={a} value={a}>
-                    {a}
-                  </MenuItem>
-                ))}
-              </TextField>
-            ) : (
-              <TextField
-                label="Asset"
-                value={fAsset}
-                onChange={(e) => setFAsset(e.target.value)}
-                placeholder="USDC"
-              />
-            )}
-            <TextField
-              label="Cantidad"
-              value={fAmount}
-              onChange={(e) => setFAmount(e.target.value)}
-              type="number"
-              inputProps={{ min: 0, step: "any" }}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFaucetOpen(false)}>Cancelar</Button>
-          <Button
-            variant="contained"
-            onClick={submitFaucet}
-            disabled={credit.isPending || !fAsset.trim() || !fAmount.trim()}
-          >
-            {credit.isPending ? "Acreditando…" : "Acreditar"}
           </Button>
         </DialogActions>
       </Dialog>

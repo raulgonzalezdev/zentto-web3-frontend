@@ -109,6 +109,12 @@ export const ENDPOINTS = {
   adminSweep: "/admin/sweep",
   // traza on-chain real consolidada (depositos + retiros) — operador
   adminOnchainActivity: "/admin/onchain-activity",
+  // parametros / tarifas editables de la plataforma (operador backoffice)
+  adminSettings: "/admin/settings",
+  // gestion de usuarios (operador backoffice)
+  adminUser: (id: string) => `/admin/users/${encodeURIComponent(id)}`,
+  adminUserResetPassword: (id: string) =>
+    `/admin/users/${encodeURIComponent(id)}/reset-password`,
 
   // P2P — arbitraje de disputas (operador backoffice — protegido)
   adminP2pDisputes: "/admin/p2p/disputes",
