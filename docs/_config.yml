@@ -1,0 +1,6 @@
+theme: jekyll-theme-cayman
+title: Zentto Web3 — Frontend
+description: >-
+  Frontend Next.js del neobanco cripto custodial Zentto Web3 — backoffice de
+  operación + banca personal. Auth httpOnly + CSRF + 2FA, Tauri escritorio/móvil.
+show_downloads: false
