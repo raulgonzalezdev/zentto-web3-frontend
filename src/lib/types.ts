@@ -605,3 +605,43 @@ export interface AdminTreasury {
   onchain: Record<string, unknown> | null;
   [k: string]: unknown;
 }
+
+/* ---------- Custodia on-chain (hot wallet por red) ---------- */
+
+/** Token (stablecoin) con su saldo on-chain en una red concreta. */
+export interface CustodyTokenBalance {
+  asset: string;
+  balance: string;
+  [k: string]: unknown;
+}
+
+/** Estado del hot wallet en una red EVM concreta. */
+export interface CustodyNetwork {
+  network: string;
+  name: string;
+  /** Símbolo del gas nativo (BNB / ETH / POL). */
+  gasSymbol: string;
+  /** Saldo de gas nativo (string decimal). */
+  gas: string;
+  /** True si el gas está por debajo del mínimo: no puede barrer ni retirar. */
+  lowGas: boolean;
+  tokens: CustodyTokenBalance[];
+  /** URL del explorer para la dirección del hot wallet en esta red. */
+  explorerUrl?: string | null;
+  [k: string]: unknown;
+}
+
+/** Control de fondos de custodia (GET /admin/custody). */
+export interface AdminCustody {
+  enabled: boolean;
+  hotWallet: string | null;
+  networks: CustodyNetwork[];
+  [k: string]: unknown;
+}
+
+/** Resultado del barrido de depósitos → hot wallet (POST /admin/sweep). */
+export interface SweepResult {
+  swept: number;
+  gasTopUps: number;
+  [k: string]: unknown;
+}

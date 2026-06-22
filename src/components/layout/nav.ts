@@ -18,6 +18,7 @@ import CreditCardIcon from "@mui/icons-material/CreditCard";
 import GavelIcon from "@mui/icons-material/Gavel";
 import BalanceIcon from "@mui/icons-material/Balance";
 import SavingsIcon from "@mui/icons-material/Savings";
+import SecurityIcon from "@mui/icons-material/Security";
 import type { UserRole } from "@/lib/types";
 
 export interface NavItem {
@@ -111,6 +112,12 @@ const ADMIN_NAV: NavSection[] = [
         href: "/fees",
         icon: SavingsIcon,
         hint: "Comisiones ganadas por la plataforma (consolidado)",
+      },
+      {
+        label: "Custodia / Fondos",
+        href: "/custodia",
+        icon: SecurityIcon,
+        hint: "Hot wallet on-chain por red, gas y barrido de depósitos",
       },
     ],
   },
@@ -271,6 +278,7 @@ export const ADMIN_ROUTES = [
   "/kyc",
   "/disputas",
   "/fees",
+  "/custodia",
   "/onchain",
   "/wallets",
   "/enviar",
